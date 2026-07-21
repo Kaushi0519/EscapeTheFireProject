@@ -78,12 +78,16 @@ async function setupNotificationChannel() {
 }
 
 
+// cardStyle: { flex: 1 } on every Stack.Navigator below fixes web scrolling: @react-navigation/stack's
+// CardSheet auto-switches a full-window screen to `minHeight: '100%'` so the browser body scrolls it,
+// but Expo web's default template sets `body { overflow: hidden }` expecting internal ScrollViews to
+// scroll instead. Forcing flex:1 keeps screens height-constrained so those ScrollViews work again.
 function RootNavigator() {
   const { user, isAdmin } = useAuth();
 
   if (!user) { // Permissions for pages non-users can view
     return (
-      <Stack.Navigator initialRouteName="Login" screenOptions={{ headerShown: false }}>
+      <Stack.Navigator initialRouteName="Login" screenOptions={{ headerShown: false, cardStyle: { flex: 1 } }}>
         <Stack.Screen name="Login" component={Login} />
         <Stack.Screen name="Instructions" component={Instructions} options={{ headerShown: true }} />
       </Stack.Navigator>
@@ -92,7 +96,7 @@ function RootNavigator() {
 
   if (isAdmin()) { // Permissions for pages admin can view
     return (
-      <Stack.Navigator screenOptions={{ headerShown: true }}>
+      <Stack.Navigator screenOptions={{ headerShown: true, cardStyle: { flex: 1 } }}>
         <Stack.Screen name="DashboardAdmin" component={DashboardAdmin} />
         <Stack.Screen name="CreateStaffAccount" component={CreateStaffAccount} />
         <Stack.Screen name="RostersAdmin" component={RostersAdmin} />
@@ -106,7 +110,7 @@ function RootNavigator() {
   }
 
   return (  // Permissions for pages staff can view
-    <Stack.Navigator screenOptions={{ headerShown: true }}>
+    <Stack.Navigator screenOptions={{ headerShown: true, cardStyle: { flex: 1 } }}>
       <Stack.Screen name="DashboardStaff" component={DashboardStaff} />
       <Stack.Screen name="RostersStaff" component={RostersStaff} />
       <Stack.Screen name="MapStaff" component={MapStaff} />

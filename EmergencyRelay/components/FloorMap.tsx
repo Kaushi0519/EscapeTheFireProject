@@ -472,61 +472,8 @@ export default function FloorMap({
                     </View>
                 )}
 
-                {/* 2D Grid Overlay */}
-                {renderGrid()}
-
-                {/* Clickable room overlays */}
-                {currentRooms.map(room => {
-                    const isHighlighted = highlightedRooms.includes(room.id);
-                    const isStairSelected = isStairwellSelected(room);
-                    const isEmergency = isEmergencyRoom(room);
-                    return (
-                        <Pressable
-                            key={room.id}
-                            style={({ pressed }) => [
-                                styles.roomOverlay,
-                                room.type === 'stairwell' && styles.stairwellOverlay,
-                                room.type === 'hall' && styles.hallOverlay,
-                                isHighlighted && styles.roomHighlighted,
-                                isStairSelected && styles.stairwellSelected,
-                                isEmergency && styles.roomEmergency,
-                                emergencyMode && styles.roomDisabled,
-                                getRoomStyle(room),
-                                pressed && !emergencyMode && styles.roomPressed,
-                                room.id === 'room-10' && { transform: [{ rotate: '348deg' }] },
-                                room.id === 'room-9' && { transform: [{ rotate: '348deg' }] },
-                                room.id === 'hall-center' && { transform: [{ rotate: '348deg' }] },
-                                room.id === 'room-16' && { transform: [{ rotate: '40deg' }] },
-                                room.id === 'room-17' && { transform: [{ rotate: '40deg' }] },
-                                room.id === 'room-18' && { transform: [{ rotate: '40deg' }] },
-                                room.id === 'room-19' && { transform: [{ rotate: '40deg' }] },
-                                room.id === 'room-20' && { transform: [{ rotate: '40deg' }] },
-                                room.id === 'room-21' && { transform: [{ rotate: '40deg' }] },
-                                room.id === 'stair-C-1' && { transform: [{ rotate: '356deg' }] },
-                                room.id === 'room-24' && { transform: [{ rotate: '40deg' }] },
-                                room.id === 'hall-right' && { transform: [{ rotate: '40deg' }] },
-                                Platform.OS === 'web' && !emergencyMode && { cursor: 'pointer' } as any,
-                                Platform.OS === 'web' && emergencyMode && { cursor: 'not-allowed' } as any,
-                            ]}
-                            onPress={() => handleRoomPress(room)}
-                            disabled={emergencyMode}
-                        >
-                            <Text style={[
-                                styles.roomLabel,
-                                room.type === 'stairwell' && styles.stairwellLabel,
-                                room.type === 'hall' && styles.hallLabel,
-                                isHighlighted && styles.roomLabelHighlighted,
-                                isStairSelected && styles.stairwellLabelSelected,
-                                isEmergency && styles.roomLabelEmergency,
-                            ]} numberOfLines={1} adjustsFontSizeToFit>
-                                {room.name}
-                            </Text>
-                            <Text style={styles.placeholderSubtext}>
-                                Add {currentFloor === 2 ? 'secondFloorView.png' : 'thirdFloorView.png'} to assets/
-                            </Text>
-                        </View>
-                    )}
-
+                    {/* Removed a duplicated/broken copy of this block that had a mismatched
+                        <Pressable>...</View> closing tag and was breaking the JSX parser. */}
                     {/* 2D Grid Overlay */}
                     {renderGrid()}
 
@@ -591,7 +538,8 @@ export default function FloorMap({
                         </View>
                     )}
                 </View>
-            </ScrollView>
+        {/* A stray </ScrollView> used to sit here with no matching opening tag anywhere
+            in the file (ScrollView is imported but otherwise unused) - removed it. */}
         </View>
     );
 }
