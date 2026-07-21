@@ -1,0 +1,34 @@
+{
+  "expo": {
+    "name": "EmergencyRelay",
+    "slug": "EmergencyRelay",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/BoysAndGirlsClubLogo.png",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#ffffff"
+      },
+      "edgeToEdgeEnabled": true
+    },
+    "extra": {
+      "API_BASE": "http://172.26.109.198:5000",
+      "API_BASE_ANDROID": "http://10.0.2.2:5000",
+      "API_BASE_WEB": "http://localhost:5000"
+    },
+    "web": {
+      "favicon": "./assets/BoysAndGirlsClubLogoNotClear.png"
+    }
+  }
+}
