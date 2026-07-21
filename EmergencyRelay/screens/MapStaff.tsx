@@ -1,4 +1,4 @@
-import {View, Text, Button, StyleSheet, TextInput, ScrollView, Alert, Dimensions} from 'react-native';
+import {View, Text, StyleSheet, Alert, Dimensions} from 'react-native';
 import {useNavigation} from '@react-navigation/native';
 import { useAuth } from '../contexts/AuthContext';
 import { useEmergency } from '../contexts/EmergencyContext';
@@ -6,6 +6,11 @@ import React, {useState, useEffect} from 'react';
 import { getUserLocationsServer, getActiveAlertsServer, createAlertServer, cancelAlertServer } from '../services/api';
 import { ReportBox } from '../models/Report';
 import FloorMap from '../components/FloorMap';
+import { COLORS, RADIUS, CARD_SHADOW } from '../constants/theme';
+import Card from '../components/Card';
+import TextField from '../components/TextField';
+import AppButton from '../components/AppButton';
+import { ScrollView } from 'react-native';
 
 interface AlertData {
     id: string;
@@ -147,8 +152,8 @@ export default function MapStaff() {
                 `Floor ${floor}${type === 'hall' ? ' (Hallway)' : ''}\n\nNo active alerts for this location.`,
                 [
                     { text: 'OK' },
-                    { 
-                        text: 'Create Alert Here', 
+                    {
+                        text: 'Create Alert Here',
                         onPress: () => {
                             setAlertLocation(roomName);
                             setShowCreateForm(true);
@@ -160,8 +165,8 @@ export default function MapStaff() {
     };
 
     return(
-        <ScrollView 
-            style={styles.scrollView} 
+        <ScrollView
+            style={styles.scrollView}
             contentContainerStyle={styles.scrollContainer}
             showsVerticalScrollIndicator={true}
         >
@@ -198,7 +203,7 @@ export default function MapStaff() {
 
                 {/* Floor Map at the top */}
                 <View style={styles.floorMapContainer}>
-                    <FloorMap 
+                    <FloorMap
                         onRoomPress={handleRoomPress}
                         highlightedRooms={highlightedRooms}
                         selectedStairwellGroup={selectedStairwellGroup}
@@ -207,99 +212,90 @@ export default function MapStaff() {
                     />
                 </View>
 
-                <View style={styles.mapBox}>
-                    <Text style={styles.mapBoxTitle}>Live User Locations</Text>
+                <Card title="Live User Locations" style={styles.mapBox}>
                     <ScrollView style={styles.userListScroll} nestedScrollEnabled={true}>
                         {locationError && (
-                            <Text style={{color: 'red', textAlign: 'center', margin: 10}}>
+                            <Text style={styles.inlineError}>
                                 Error: {locationError}
                             </Text>
                         )}
-                        {loading && <Text style={{textAlign: 'center', marginTop: 10}}>Loading...</Text>}
+                        {loading && <Text style={styles.loadingText}>Loading...</Text>}
                         {!loading && userLocations.length === 0 && !locationError && (
-                            <Text style={{textAlign: 'center', marginTop: 10, color: '#666'}}>
+                            <Text style={styles.emptyText}>
                                 No users with location data
                             </Text>
                         )}
                         {[...userLocations].sort((a, b) => (a.email || '').localeCompare(b.email || '')).map(u => (
                             <View key={u.id} style={styles.userItem}>
-                                <Text style={{fontWeight: '600'}}>{u.email}</Text>
-                                <Text style={{fontSize: 12, color: '#666'}}>
+                                <Text style={styles.userEmail}>{u.email}</Text>
+                                <Text style={styles.userLocation}>
                                     {u.lastLocation?.room ? `Room: ${u.lastLocation.room}` : 'Location: Unknown'}
                                 </Text>
                             </View>
                         ))}
                     </ScrollView>
-                </View>
+                </Card>
 
             {selectedAlert && (
                 <>
-                    <ReportBox 
+                    <ReportBox
                         location={selectedAlert.location}
                         staff={selectedAlert.staff}
                         type={selectedAlert.type}
                     />
                     <View style={styles.reportButtonsContainer}>
-                        <Button title="Cancel Alert" onPress={handleCancelAlert} />
-                        <View style={{ width: 8 }} />
-                        <Button title="Back" onPress={() => setSelectedAlert(null)} />
+                        <AppButton title="Cancel Alert" variant="danger" onPress={handleCancelAlert} />
+                        <AppButton title="Back" variant="secondary" onPress={() => setSelectedAlert(null)} />
                     </View>
                 </>
             )}
 
             {showCreateForm ? (
-                <>
-                    <View style={styles.formContainer}>
-                        <Text style={styles.formTitle}>Create New Alert</Text>
-                        {formError && (
-                            <Text style={{color: 'red', fontSize: 12, marginBottom: 8}}>
-                                {formError}
-                            </Text>
-                        )}
-                        <TextInput
-                            placeholder="Location (e.g., Room 101)"
-                            style={styles.input}
-                            value={alertLocation}
-                            onChangeText={setAlertLocation}
-                        />
-                        <TextInput
-                            placeholder="Alert Type (e.g., Fire, Medical)"
-                            style={styles.input}
-                            value={alertType}
-                            onChangeText={setAlertType}
-                        />
-                        <View style={styles.formButtonsContainer}>
-                            <Button title="Create" onPress={handleCreateAlert} />
-                            <View style={{ width: 8 }} />
-                            <Button title="Cancel" onPress={() => setShowCreateForm(false)} />
-                        </View>
+                <Card title="Create New Alert">
+                    {formError && (
+                        <Text style={styles.inlineError}>
+                            {formError}
+                        </Text>
+                    )}
+                    <TextField
+                        placeholder="Location (e.g., Room 101)"
+                        value={alertLocation}
+                        onChangeText={setAlertLocation}
+                    />
+                    <TextField
+                        placeholder="Alert Type (e.g., Fire, Medical)"
+                        value={alertType}
+                        onChangeText={setAlertType}
+                    />
+                    <View style={styles.formButtonsContainer}>
+                        <AppButton title="Create" onPress={handleCreateAlert} />
+                        <AppButton title="Cancel" variant="secondary" onPress={() => setShowCreateForm(false)} />
                     </View>
-                </>
+                </Card>
             ) : !selectedAlert && alerts.length > 0 ? (
-                <>
-                    <View style={styles.alertsContainer}>
-                        <Text style={styles.alertsTitle}>Active Alerts ({alerts.length})</Text>
-                        <ScrollView style={{ maxHeight: 120 }}>
-                            {alerts.map(alert => (
-                                <Button 
-                                    key={alert.id}
-                                    title={`${alert.type} - ${alert.location}`}
-                                    onPress={() => setSelectedAlert(alert)}
-                                />
-                            ))}
-                        </ScrollView>
-                    </View>
-                </>
+                <Card title={`Active Alerts (${alerts.length})`} style={styles.alertsContainer}>
+                    <ScrollView style={{ maxHeight: 120 }}>
+                        {alerts.map(alert => (
+                            <AppButton
+                                key={alert.id}
+                                variant="secondary"
+                                title={`${alert.type} - ${alert.location}`}
+                                onPress={() => setSelectedAlert(alert)}
+                                style={{ marginBottom: 8 }}
+                            />
+                        ))}
+                    </ScrollView>
+                </Card>
             ) : null}
 
-            <View style={{ height: 16 }} />
+            <View style={{ height: 8 }} />
             {!showCreateForm && !selectedAlert && !emergencyState.isActive && (
-                <Button title="Create Alert" onPress={handleOpenCreateForm} />
+                <AppButton title="Create Alert" variant="danger" onPress={handleOpenCreateForm} />
             )}
             {!showCreateForm && !selectedAlert && !emergencyState.isActive && (
-                <View style={{ height: 16 }} />
+                <View style={{ height: 10 }} />
             )}
-            <Button title="Back" onPress={handleBack} />
+            <AppButton title="Back" variant="outline" onPress={handleBack} />
             <View style={{ height: 20 }} />
         </View>
         </ScrollView>
@@ -311,35 +307,24 @@ const { height: screenHeight } = Dimensions.get('window');
 const styles = StyleSheet.create({
     scrollView: {
         flex: 1,
-        backgroundColor: '#fff',
+        backgroundColor: COLORS.background,
     },
     scrollContainer: {
         paddingBottom: 50,
     },
     container: {
         alignItems: 'center',
-        backgroundColor: '#ffffffff',
+        backgroundColor: COLORS.background,
         paddingTop: 10,
+        paddingHorizontal: 16,
     },
     floorMapContainer: {
-        width: '98%',
+        width: '100%',
         marginBottom: 12,
     },
     mapBox: {
-        width: '95%',
-        height: screenHeight * 0.50, // 25% of screen height
-        backgroundColor: '#ddd',
-        borderRadius: 8,
-        borderColor: '#000',
-        borderWidth: 1,
-        overflow: 'hidden',
-    },
-    mapBoxTitle: {
-        textAlign: 'center',
-        paddingVertical: 10,
-        fontWeight: 'bold',
-        fontSize: 18,
-        backgroundColor: '#ccc',
+        width: '100%',
+        height: screenHeight * 0.50,
     },
     userListScroll: {
         flex: 1,
@@ -347,53 +332,31 @@ const styles = StyleSheet.create({
     userItem: {
         padding: 10,
         borderBottomWidth: 1,
-        borderBottomColor: '#bbb',
-        backgroundColor: '#eee',
+        borderBottomColor: COLORS.border,
     },
-    alertsContainer: {
-        width: '90%',
-        padding: 12,
-        backgroundColor: '#fff3cd',
-        borderRadius: 8,
-        borderColor: '#ffc107',
-        borderWidth: 2,
-        marginVertical: 8,
+    userEmail: {
+        fontWeight: '600',
+        color: COLORS.textPrimary,
     },
-    alertsTitle: {
-        fontSize: 14,
-        fontWeight: 'bold',
+    userLocation: {
+        fontSize: 12,
+        color: COLORS.textSecondary,
+    },
+    inlineError: {
+        color: COLORS.danger,
+        textAlign: 'center',
         marginBottom: 8,
-        color: '#ff6b6b',
+        fontSize: 12,
     },
-    reportButtonsContainer: {
-        flexDirection: 'row',
-        width: '90%',
-        justifyContent: 'center',
-        gap: 8,
-        marginVertical: 8,
+    loadingText: {
+        textAlign: 'center',
+        marginTop: 10,
+        color: COLORS.textSecondary,
     },
-    formContainer: {
-        width: '90%',
-        padding: 12,
-        backgroundColor: '#e3f2fd',
-        borderRadius: 8,
-        borderColor: '#2196f3',
-        borderWidth: 2,
-        marginVertical: 8,
-    },
-    formTitle: {
-        fontSize: 14,
-        fontWeight: 'bold',
-        marginBottom: 8,
-        color: '#1976d2',
-    },
-    input: {
-        borderWidth: 1,
-        borderColor: '#ccc',
-        padding: 10,
-        marginBottom: 8,
-        borderRadius: 4,
-        backgroundColor: '#fff',
+    emptyText: {
+        textAlign: 'center',
+        marginTop: 10,
+        color: COLORS.textSecondary,
     },
     formButtonsContainer: {
         flexDirection: 'row',
@@ -401,13 +364,24 @@ const styles = StyleSheet.create({
         gap: 8,
         marginTop: 8,
     },
+    alertsContainer: {
+        width: '100%',
+    },
+    reportButtonsContainer: {
+        flexDirection: 'row',
+        width: '100%',
+        justifyContent: 'center',
+        gap: 8,
+        marginVertical: 8,
+    },
     // Emergency banner styles
     emergencyBanner: {
         width: '100%',
-        backgroundColor: '#d32f2f',
+        backgroundColor: COLORS.danger,
         padding: 16,
         alignItems: 'center',
         marginBottom: 10,
+        borderRadius: RADIUS.md,
     },
     emergencyBannerTitle: {
         color: '#fff',

@@ -1,9 +1,13 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, Button, FlatList, StyleSheet, Alert, Modal, TextInput, ActivityIndicator, TouchableOpacity, Platform } from 'react-native';
+import { View, Text, FlatList, StyleSheet, Alert, Modal, ActivityIndicator, Platform } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { useAuth } from '../contexts/AuthContext';
 import { getUsersServer, updateUserServer, resetUserPasswordServer, deleteUserServer, getApiBaseUrl } from '../services/api';
 import { useNavigation } from '@react-navigation/native';
+import { COLORS, RADIUS, CARD_SHADOW } from '../constants/theme';
+import PageHeader from '../components/PageHeader';
+import TextField from '../components/TextField';
+import AppButton from '../components/AppButton';
 
 export default function EditStaffAccount() {
     const { user, loading: authLoading, isAdmin } = useAuth();
@@ -175,8 +179,7 @@ export default function EditStaffAccount() {
 
     return (
         <View style={styles.container}>
-            <Text style={styles.title}>Manage Staff Accounts</Text>
-            <Text style={styles.caption}>Edit, reset password, or delete staff accounts</Text>
+            <PageHeader eyebrow="ADMIN SETTINGS" title="Manage Staff Accounts" subtitle="Edit, reset password, or delete staff accounts" />
 
             {lastMessage ? <Text style={styles.message}>{lastMessage}</Text> : null}
 
@@ -195,43 +198,40 @@ export default function EditStaffAccount() {
                                 <Text style={styles.userRoles}>{(item.roles || []).join(', ')}</Text>
                             </View>
                             <View style={{ flexDirection: 'row', gap: 8 }}>
-                                <Button title="Edit" onPress={() => openEditModal(item)} />
-                                <Button title="Reset" onPress={() => openResetPasswordModal(item)} />
-                                <Button title="Delete" color="#d00" onPress={() => handleDeleteUser(item)} />
+                                <AppButton title="Edit" size="small" variant="secondary" onPress={() => openEditModal(item)} />
+                                <AppButton title="Reset" size="small" variant="secondary" onPress={() => openResetPasswordModal(item)} />
+                                <AppButton title="Delete" size="small" variant="danger" onPress={() => handleDeleteUser(item)} />
                             </View>
                         </View>
                     )}
                 />
             )}
 
-            <View style={{ marginTop: 16 }}>
-                <Button title="Refresh" onPress={load} />
-                <View style={{ height: 8 }} />
-                <Button title="Back" onPress={handleCancel} />
+            <View style={{ marginTop: 16, gap: 10 }}>
+                <AppButton title="Refresh" variant="secondary" onPress={load} />
+                <AppButton title="Back" variant="outline" onPress={handleCancel} />
             </View>
 
             {/* Edit Modal */}
             <Modal visible={!!editTarget} animationType="slide" onRequestClose={() => setEditTarget(null)}>
                 <View style={styles.modalContainer}>
                     <Text style={styles.modalTitle}>Edit Account</Text>
-                    <Text style={styles.label}>Email</Text>
-                    <TextInput
-                        style={styles.input}
+                    <TextField
+                        label="Email"
                         value={editEmail}
                         onChangeText={setEditEmail}
                         placeholder="Email"
                         autoCapitalize="none"
                         keyboardType="email-address"
                     />
+                    <AppButton title={editImageUri ? 'Change Photo' : 'Add Photo'} variant="secondary" onPress={pickImage} />
+                    {editImageUri ? <Text style={styles.helperText}>Photo selected</Text> : null}
                     <View style={{ height: 16 }} />
-                    <Button title={editImageUri ? 'Change Photo' : 'Add Photo'} onPress={pickImage} />
-                    {editImageUri ? <Text style={{ marginTop: 8 }}>Photo selected</Text> : null}
-                    <View style={{ height: 24 }} />
                     {saving ? <ActivityIndicator /> : (
                         <>
-                            <Button title="Save Changes" onPress={handleSaveEdit} />
-                            <View style={{ height: 8 }} />
-                            <Button title="Cancel" onPress={() => setEditTarget(null)} />
+                            <AppButton title="Save Changes" onPress={handleSaveEdit} />
+                            <View style={{ height: 10 }} />
+                            <AppButton title="Cancel" variant="outline" onPress={() => setEditTarget(null)} />
                         </>
                     )}
                 </View>
@@ -242,29 +242,27 @@ export default function EditStaffAccount() {
                 <View style={styles.modalContainer}>
                     <Text style={styles.modalTitle}>Reset Password</Text>
                     <Text style={styles.caption}>Resetting password for: {resetTarget?.email}</Text>
-                    <View style={{ height: 16 }} />
-                    <Text style={styles.label}>New Password</Text>
-                    <TextInput
-                        style={styles.input}
+                    <View style={{ height: 8 }} />
+                    <TextField
+                        label="New Password"
                         value={newPassword}
                         onChangeText={setNewPassword}
                         placeholder="New Password"
                         secureTextEntry
                     />
-                    <Text style={styles.label}>Confirm Password</Text>
-                    <TextInput
-                        style={styles.input}
+                    <TextField
+                        label="Confirm Password"
                         value={confirmPassword}
                         onChangeText={setConfirmPassword}
                         placeholder="Confirm Password"
                         secureTextEntry
                     />
-                    <View style={{ height: 24 }} />
+                    <View style={{ height: 8 }} />
                     {resetting ? <ActivityIndicator /> : (
                         <>
-                            <Button title="Reset Password" onPress={handleResetPassword} />
-                            <View style={{ height: 8 }} />
-                            <Button title="Cancel" onPress={() => setResetTarget(null)} />
+                            <AppButton title="Reset Password" onPress={handleResetPassword} />
+                            <View style={{ height: 10 }} />
+                            <AppButton title="Cancel" variant="outline" onPress={() => setResetTarget(null)} />
                         </>
                     )}
                 </View>
@@ -272,15 +270,14 @@ export default function EditStaffAccount() {
 
             {/* Delete Confirmation Modal */}
             <Modal visible={!!deleteTarget} transparent animationType="fade" onRequestClose={() => setDeleteTarget(null)}>
-                <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.4)' }}>
-                    <View style={{ width: 320, backgroundColor: '#fff', padding: 16, borderRadius: 8 }}>
-                        <Text style={{ fontSize: 16, fontWeight: 'bold', marginBottom: 12 }}>Confirm Delete</Text>
-                        <Text style={{ marginBottom: 16 }}>Are you sure you want to delete {deleteTarget?.email}?</Text>
+                <View style={styles.confirmOverlay}>
+                    <View style={styles.confirmBox}>
+                        <Text style={styles.confirmTitle}>Confirm Delete</Text>
+                        <Text style={styles.confirmBody}>Are you sure you want to delete {deleteTarget?.email}?</Text>
                         {deleting ? <ActivityIndicator /> : (
-                            <View style={{ flexDirection: 'row', justifyContent: 'flex-end' }}>
-                                <Button title="Cancel" onPress={() => setDeleteTarget(null)} />
-                                <View style={{ width: 8 }} />
-                                <Button title="Delete" color="#d00" onPress={confirmDelete} />
+                            <View style={{ flexDirection: 'row', justifyContent: 'flex-end', gap: 8 }}>
+                                <AppButton title="Cancel" size="small" variant="secondary" onPress={() => setDeleteTarget(null)} />
+                                <AppButton title="Delete" size="small" variant="danger" onPress={confirmDelete} />
                             </View>
                         )}
                     </View>
@@ -294,69 +291,82 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         padding: 16,
-        backgroundColor: '#fff',
-    },
-    title: {
-        fontSize: 24,
-        fontWeight: 'bold',
-        textAlign: 'center',
-        marginBottom: 8,
-    },
-    caption: {
-        fontSize: 14,
-        color: '#666',
-        textAlign: 'center',
-        marginBottom: 16,
+        backgroundColor: COLORS.background,
     },
     message: {
-        padding: 8,
-        backgroundColor: '#e8f5e9',
-        borderRadius: 4,
+        padding: 10,
+        backgroundColor: COLORS.primarySoft,
+        color: COLORS.primaryDark,
+        borderRadius: RADIUS.sm,
         marginBottom: 12,
         textAlign: 'center',
     },
     emptyText: {
         textAlign: 'center',
-        color: '#666',
+        color: COLORS.textSecondary,
         marginTop: 20,
     },
     userRow: {
         flexDirection: 'row',
         alignItems: 'center',
-        padding: 12,
-        borderBottomWidth: 1,
-        borderColor: '#eee',
+        padding: 14,
+        marginBottom: 10,
+        backgroundColor: COLORS.surface,
+        borderRadius: RADIUS.md,
+        ...CARD_SHADOW,
     },
     userEmail: {
         fontSize: 16,
-        fontWeight: '500',
+        fontWeight: '600',
+        color: COLORS.textPrimary,
     },
     userRoles: {
         fontSize: 12,
-        color: '#666',
+        color: COLORS.textSecondary,
     },
     modalContainer: {
         flex: 1,
         padding: 24,
         justifyContent: 'center',
-        backgroundColor: '#fff',
+        backgroundColor: COLORS.background,
     },
     modalTitle: {
         fontSize: 22,
         fontWeight: 'bold',
         textAlign: 'center',
         marginBottom: 16,
+        color: COLORS.textPrimary,
     },
-    label: {
+    caption: {
         fontSize: 14,
-        fontWeight: '500',
-        marginBottom: 4,
-        marginTop: 12,
+        color: COLORS.textSecondary,
+        textAlign: 'center',
     },
-    input: {
-        height: 40,
-        borderColor: 'gray',
-        borderWidth: 1,
-        paddingHorizontal: 8,
+    helperText: {
+        fontSize: 12,
+        color: COLORS.textSecondary,
+        marginTop: 8,
+    },
+    confirmOverlay: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: 'rgba(0,0,0,0.4)',
+    },
+    confirmBox: {
+        width: 320,
+        backgroundColor: COLORS.surface,
+        padding: 18,
+        borderRadius: RADIUS.md,
+    },
+    confirmTitle: {
+        fontSize: 16,
+        fontWeight: 'bold',
+        marginBottom: 12,
+        color: COLORS.textPrimary,
+    },
+    confirmBody: {
+        marginBottom: 16,
+        color: COLORS.textPrimary,
     },
 });

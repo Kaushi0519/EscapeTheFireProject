@@ -1,29 +1,26 @@
-import {View, Text, TextInput, Button, StyleSheet, Alert, Platform, ScrollView} from 'react-native';
+import {View, Text, Button, StyleSheet, Alert, Platform, ScrollView} from 'react-native';
 import {useNavigation} from '@react-navigation/native';
 import { useAuth } from '../contexts/AuthContext';
 import { useEmergency } from '../contexts/EmergencyContext';
-import React, {useState} from 'react';
+import React from 'react';
+import { Ionicons } from '@expo/vector-icons';
+import ActionButton from '../components/ActionButton';
 
 const DashboardAdmin = () => {
-    
+
     const navigation = useNavigation();
-    const { signOut } = useAuth();
+    const { user, signOut } = useAuth();
     const { emergencyState } = useEmergency();
 
     function handleAlertInitiation() {
-        // Handle alert initiation logic here
-        console.log('Alert initiated');
         (navigation as any).navigate('MapAdmin');
-    }   
+    }
 
     function handleViewClassRoster() {
-        // Handle view class roster logic here
-        console.log('Viewing class roster');
         (navigation as any).navigate('RostersAdmin');
-    }  
+    }
 
     function handleInstructions() {
-        console.log('Navigating to instructions');
         (navigation as any).navigate('Instructions');
     }
 
@@ -57,24 +54,18 @@ const DashboardAdmin = () => {
     }
 
     function handleCreateStaffAccount() {
-        // Handle create staff account logic here
-        console.log('Creating new staff account');
         (navigation as any).navigate('CreateStaffAccount');
     }
 
     function handleManageStaffAccounts() {
-        console.log('Managing staff accounts');
         (navigation as any).navigate('EditStaffAccount');
     }
 
     function handleCreateStudentID() {
-        // Handle create student ID logic here
-        console.log('Creating student ID');
         (navigation as any).navigate('CreateStudentID');
     }
 
     function handleManageStudentIDs() {
-        console.log('Managing student IDs');
         (navigation as any).navigate('EditStudentID');
     }
 
@@ -83,7 +74,10 @@ const DashboardAdmin = () => {
             {/* Active Emergency Banner */}
             {emergencyState.isActive && (
                 <View style={styles.emergencyBanner}>
-                    <Text style={styles.emergencyBannerTitle}>ACTIVE EMERGENCY</Text>
+                    <View style={styles.emergencyHeaderRow}>
+                        <Ionicons name="warning" size={22} color="#fff" />
+                        <Text style={styles.emergencyBannerTitle}>ACTIVE EMERGENCY</Text>
+                    </View>
                     <Text style={styles.emergencyBannerText}>
                         Type: {emergencyState.type}
                     </Text>
@@ -103,45 +97,45 @@ const DashboardAdmin = () => {
                         Started: {emergencyState.startedAt?.toLocaleTimeString()} | By: {emergencyState.declaredBy}
                     </Text>
                     <View style={{ marginTop: 10 }}>
-                        <Button 
+                        <Button
                             title="Go to Emergency Map"
                             onPress={() => (navigation as any).navigate('MapAdmin')}
-                            color="#1976d2"
+                            color="#fff"
                         />
                     </View>
                 </View>
             )}
 
-            <View style={styles.container}>
-                <View style={styles.containerBox}>
-                <Text style={styles.title}>Emergency Management</Text>
-                <Text style={styles.caption}>From here you can initiate alerts and view & manage all class rosters</Text>
-                <View style={{ height: 16 }} />
-                <Button title="Initiate Alert" onPress={handleAlertInitiation} />
-                <View style={{ height: 16 }} />
-                <Button title="View Class Roster" onPress={handleViewClassRoster} />
-                <View style={{ height: 16 }} />
-                <Button title="Instructions" onPress={handleInstructions} />
-                <View style={{ height: 16 }} />
-            </View>
-            <View style={{ height: 32 }} />
-            <View style={styles.containerBox}>
-                <Text style={styles.title}>Admin Settings</Text>
-                <Text style={styles.caption}>From here you can manage staff accounts and student IDs</Text>
-                <View style={{ height: 16 }} />
-                <Button title="Create New Staff Account" onPress={handleCreateStaffAccount} />
-                <View style={{ height: 16 }} />
-                <Button title="Manage Staff Accounts" onPress={handleManageStaffAccounts} />
-                <View style={{ height: 16 }} />
-                <Button title="Create Student ID" onPress={handleCreateStudentID} />
-                <View style={{ height: 16 }} />
-                <Button title="Manage Student IDs" onPress={handleManageStudentIDs} />
-                <View style={{ height: 16 }} />
-            </View>
-            <View style={{ height: 32 }} />
-            <View style={{width: '100%', maxWidth: 400}}>
-                <Button title="Logout" onPress={handleLogout} />
-            </View>
+            <View style={styles.page}>
+                {/* Header */}
+                <View style={styles.header}>
+                    <Text style={styles.eyebrow}>ADMIN DASHBOARD</Text>
+                    <Text style={styles.title}>Emergency Management</Text>
+                    {user?.email ? <Text style={styles.subtitle}>Signed in as {user.email}</Text> : null}
+                </View>
+
+                {/* Actions card */}
+                <View style={styles.card}>
+                    <Text style={styles.cardTitle}>Quick Actions</Text>
+                    <Text style={styles.cardCaption}>Initiate alerts and view & manage all class rosters</Text>
+                    <View style={styles.cardDivider} />
+                    <ActionButton title="Initiate Alert" icon="megaphone-outline" variant="danger" onPress={handleAlertInitiation} />
+                    <ActionButton title="View Class Roster" icon="people-outline" variant="primary" onPress={handleViewClassRoster} />
+                    <ActionButton title="Instructions" icon="information-circle-outline" variant="secondary" onPress={handleInstructions} />
+                </View>
+
+                {/* Admin settings card */}
+                <View style={styles.card}>
+                    <Text style={styles.cardTitle}>Admin Settings</Text>
+                    <Text style={styles.cardCaption}>Manage staff accounts and student IDs</Text>
+                    <View style={styles.cardDivider} />
+                    <ActionButton title="Create New Staff Account" icon="person-add-outline" variant="primary" onPress={handleCreateStaffAccount} />
+                    <ActionButton title="Manage Staff Accounts" icon="people-circle-outline" variant="primary" onPress={handleManageStaffAccounts} />
+                    <ActionButton title="Create Student ID" icon="card-outline" variant="secondary" onPress={handleCreateStudentID} />
+                    <ActionButton title="Manage Student IDs" icon="id-card-outline" variant="secondary" onPress={handleManageStudentIDs} />
+                </View>
+
+                <ActionButton title="Logout" icon="log-out-outline" variant="secondary" onPress={handleLogout} />
             </View>
         </ScrollView>
     );
@@ -150,38 +144,66 @@ const DashboardAdmin = () => {
 const styles = StyleSheet.create({
     scrollView: {
         flex: 1,
-        backgroundColor: '#ffffffff',
+        backgroundColor: '#F5F7FA',
     },
     scrollContainer: {
         flexGrow: 1,
-    },
-    container: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-        backgroundColor: '#ffffffff',
         padding: 16,
+        paddingBottom: 40,
     },
-    containerBox: {
+    page: {
         width: '100%',
-        maxWidth: 400,
-        padding: 16,
-        borderRadius: 8,
-        borderColor: '#000',
-        borderWidth: 1,
-        backgroundColor: '#f9f9f9',
-        elevation: 2,
+        maxWidth: 480,
+        alignSelf: 'center',
+    },
+    header: {
+        marginBottom: 20,
+        alignItems: 'center',
+    },
+    eyebrow: {
+        fontSize: 12,
+        fontWeight: '700',
+        color: '#1976D2',
+        letterSpacing: 1,
+        marginBottom: 4,
     },
     title: {
         fontSize: 24,
-        marginBottom: 16,
+        fontWeight: 'bold',
+        color: '#1A1A1A',
         textAlign: 'center',
     },
-    caption: {
-        fontSize: 12,
-        color: '#666',
-        marginBottom: 8,
-        textAlign: 'center',
+    subtitle: {
+        fontSize: 13,
+        color: '#757575',
+        marginTop: 4,
+    },
+    card: {
+        width: '100%',
+        backgroundColor: '#FFFFFF',
+        borderRadius: 16,
+        padding: 18,
+        marginBottom: 16,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.08,
+        shadowRadius: 8,
+        elevation: 3,
+    },
+    cardTitle: {
+        fontSize: 17,
+        fontWeight: '700',
+        color: '#1A1A1A',
+    },
+    cardCaption: {
+        fontSize: 13,
+        color: '#757575',
+        marginTop: 2,
+    },
+    cardDivider: {
+        height: 1,
+        backgroundColor: '#EEEEEE',
+        marginVertical: 12,
     },
     // Emergency banner styles
     emergencyBanner: {
@@ -189,12 +211,19 @@ const styles = StyleSheet.create({
         backgroundColor: '#d32f2f',
         padding: 16,
         alignItems: 'center',
+        borderBottomLeftRadius: 16,
+        borderBottomRightRadius: 16,
+    },
+    emergencyHeaderRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 8,
+        marginBottom: 8,
     },
     emergencyBannerTitle: {
         color: '#fff',
-        fontSize: 22,
+        fontSize: 20,
         fontWeight: 'bold',
-        marginBottom: 8,
     },
     emergencyBannerText: {
         color: '#fff',

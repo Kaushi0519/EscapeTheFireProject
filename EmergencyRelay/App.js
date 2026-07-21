@@ -97,13 +97,13 @@ function RootNavigator() {
   if (isAdmin()) { // Permissions for pages admin can view
     return (
       <Stack.Navigator screenOptions={{ headerShown: true, cardStyle: { flex: 1 } }}>
-        <Stack.Screen name="DashboardAdmin" component={DashboardAdmin} />
-        <Stack.Screen name="CreateStaffAccount" component={CreateStaffAccount} />
-        <Stack.Screen name="RostersAdmin" component={RostersAdmin} />
-        <Stack.Screen name="CreateStudentID" component={CreateStudentID} />
-        <Stack.Screen name="EditStudentID" component={EditStudentID} />
-        <Stack.Screen name="EditStaffAccount" component={EditStaffAccount} />
-        <Stack.Screen name="MapAdmin" component={MapAdmin} />
+        <Stack.Screen name="DashboardAdmin" component={DashboardAdmin} options={{ title: 'Dashboard' }} />
+        <Stack.Screen name="CreateStaffAccount" component={CreateStaffAccount} options={{ title: 'Create Staff Account' }} />
+        <Stack.Screen name="RostersAdmin" component={RostersAdmin} options={{ title: 'Rosters' }} />
+        <Stack.Screen name="CreateStudentID" component={CreateStudentID} options={{ title: 'Create Student ID' }} />
+        <Stack.Screen name="EditStudentID" component={EditStudentID} options={{ title: 'Manage Student IDs' }} />
+        <Stack.Screen name="EditStaffAccount" component={EditStaffAccount} options={{ title: 'Manage Staff Accounts' }} />
+        <Stack.Screen name="MapAdmin" component={MapAdmin} options={{ title: 'Emergency Map' }} />
         <Stack.Screen name="Instructions" component={Instructions} />
       </Stack.Navigator>
     );
@@ -111,9 +111,9 @@ function RootNavigator() {
 
   return (  // Permissions for pages staff can view
     <Stack.Navigator screenOptions={{ headerShown: true, cardStyle: { flex: 1 } }}>
-      <Stack.Screen name="DashboardStaff" component={DashboardStaff} />
-      <Stack.Screen name="RostersStaff" component={RostersStaff} />
-      <Stack.Screen name="MapStaff" component={MapStaff} />
+      <Stack.Screen name="DashboardStaff" component={DashboardStaff} options={{ title: 'Dashboard' }} />
+      <Stack.Screen name="RostersStaff" component={RostersStaff} options={{ title: 'Rosters' }} />
+      <Stack.Screen name="MapStaff" component={MapStaff} options={{ title: 'Emergency Map' }} />
       <Stack.Screen name="Instructions" component={Instructions} />
     </Stack.Navigator>
   );

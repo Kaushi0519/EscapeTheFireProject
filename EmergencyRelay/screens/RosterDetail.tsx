@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, Button, FlatList, StyleSheet, Image, Switch, TouchableOpacity, ActivityIndicator, Alert, TextInput, Modal } from 'react-native';
+import { View, Text, FlatList, StyleSheet, Image, Switch, TouchableOpacity, ActivityIndicator, Alert, Modal } from 'react-native';
 import { getRoster, addStudentToRoster, updateStudentInRoster, getStudentsServer, deleteStudentFromRoster, getUsersServer, assignRoster, getUserLocationsServer, updateRoster } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
+import { COLORS, RADIUS } from '../constants/theme';
+import AppButton from '../components/AppButton';
 
 export default function RosterDetail({ rosterId, onClose }) {
     const { user, isAdmin } = useAuth();
@@ -26,7 +28,7 @@ export default function RosterDetail({ rosterId, onClose }) {
             setSelectedRoster(r);
             setStudents(r.students || []);
             setStaffAccounted(r.staffAccounted || false);
-            
+
             // Fetch staff location if roster has assigned staff
             if (r.assignedTo) {
                 try {
@@ -132,45 +134,41 @@ export default function RosterDetail({ rosterId, onClose }) {
                 {selectedRoster.staffImageUrl ? (
                     <Image source={{ uri: selectedRoster.staffImageUrl }} style={styles.avatar} />
                 ) : (
-                    <View style={[styles.avatar, { backgroundColor: '#4a90d9' }]}>
+                    <View style={[styles.avatar, { backgroundColor: COLORS.primary }]}>
                         <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 18 }}>S</Text>
                     </View>
                 )}
                 <View style={{ flex: 1 }}>
-                    <Text style={{ fontWeight: 'bold' }}>{selectedRoster.assignedToEmail || 'Staff Member'}</Text>
-                    <Text style={{ fontSize: 12, color: '#666' }}>
+                    <Text style={styles.staffName}>{selectedRoster.assignedToEmail || 'Staff Member'}</Text>
+                    <Text style={styles.staffLocation}>
                         Location: {staffLocation || 'Unknown'}
                     </Text>
                 </View>
-                <Switch value={staffAccounted} onValueChange={toggleStaffAccounted} />
+                <Switch value={staffAccounted} onValueChange={toggleStaffAccounted} trackColor={{ true: COLORS.primary }} />
             </View>
         );
     };
 
     return (
         <View style={styles.container}>
-            <View style={{ padding: 8, flexDirection: 'row', alignItems: 'center' }}>
+            <View style={styles.actionsRow}>
                 {(isAdmin && isAdmin()) || (selectedRoster && user && selectedRoster.assignedTo === user.id) ? (
                     <>
-                        <Button title="Add existing student" onPress={() => { loadStudents(); setShowStudentModal(true); }} />
-                        <View style={{ width: 8 }} />
+                        <AppButton title="Add existing student" size="small" variant="secondary" onPress={() => { loadStudents(); setShowStudentModal(true); }} />
                         {(isAdmin && isAdmin()) ? (
-                            <>
-                                <Button title={selectedRoster && selectedRoster.assignedToEmail ? `Assigned: ${selectedRoster.assignedToEmail}` : 'Assign staff'} onPress={() => { loadStaff(); setShowStaffModal(true); }} />
-                                <View style={{ width: 8 }} />
-                            </>
+                            <AppButton title={selectedRoster && selectedRoster.assignedToEmail ? `Assigned: ${selectedRoster.assignedToEmail}` : 'Assign staff'} size="small" variant="secondary" onPress={() => { loadStaff(); setShowStaffModal(true); }} />
                         ) : null}
                     </>
                 ) : null}
             </View>
 
             {loading ? (
-                <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+                <View style={styles.centerFill}>
                     <ActivityIndicator />
                 </View>
             ) : !selectedRoster ? (
-                <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-                    <Text style={{ color: '#666' }}>Roster not found</Text>
+                <View style={styles.centerFill}>
+                    <Text style={{ color: COLORS.textSecondary }}>Roster not found</Text>
                 </View>
             ) : (
                 <FlatList
@@ -179,11 +177,11 @@ export default function RosterDetail({ rosterId, onClose }) {
                     ListHeaderComponent={renderStaffHeader}
                     renderItem={({ item }) => (
                         <View style={styles.row}>
-                            {item.imageUrl ? <Image source={{ uri: item.imageUrl }} style={styles.avatar} /> : <View style={[styles.avatar, { backgroundColor: '#eee' }]} />}
-                            <Text style={{ flex: 1 }}>{item.name || `${item.firstName || ''} ${item.lastName || ''}`.trim()}</Text>
-                            <Switch value={!!item.accounted} onValueChange={(val) => toggleAccounted(item.id || item._id, val)} />
+                            {item.imageUrl ? <Image source={{ uri: item.imageUrl }} style={styles.avatar} /> : <View style={[styles.avatar, { backgroundColor: COLORS.secondarySoft }]} />}
+                            <Text style={{ flex: 1, color: COLORS.textPrimary }}>{item.name || `${item.firstName || ''} ${item.lastName || ''}`.trim()}</Text>
+                            <Switch value={!!item.accounted} onValueChange={(val) => toggleAccounted(item.id || item._id, val)} trackColor={{ true: COLORS.primary }} />
                             {((isAdmin && isAdmin()) || (selectedRoster && user && selectedRoster.assignedTo === user.id)) ? (
-                                <Button title="Remove" color="#c00" onPress={() => handleRemoveStudent(item.id || item._id)} />
+                                <AppButton title="Remove" size="small" variant="danger" onPress={() => handleRemoveStudent(item.id || item._id)} style={{ marginLeft: 8 }} />
                             ) : null}
                         </View>
                     )}
@@ -191,60 +189,114 @@ export default function RosterDetail({ rosterId, onClose }) {
             )}
 
             <Modal visible={showStudentModal} animationType="slide" onRequestClose={() => setShowStudentModal(false)}>
-                <View style={{ flex: 1, padding: 16 }}>
-                    <Text style={{ fontSize: 18, marginBottom: 12 }}>Select student to add</Text>
+                <View style={styles.modalContainer}>
+                    <Text style={styles.modalTitle}>Select student to add</Text>
                     <FlatList data={[...studentList].sort((a, b) => `${a.firstName} ${a.lastName}`.localeCompare(`${b.firstName} ${b.lastName}`))} keyExtractor={i => i.id} renderItem={({ item }) => (
-                        <TouchableOpacity style={{ padding: 12, borderBottomWidth: 1, borderColor: '#eee', flexDirection: 'row', alignItems: 'center' }} onPress={() => { handleAddExistingStudent(item); setShowStudentModal(false); }}>
-                            {item.imageUrl ? <Image source={{ uri: item.imageUrl }} style={{ width: 40, height: 40, borderRadius: 20, marginRight: 12 }} /> : <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: '#eee', marginRight: 12 }} />}
-                            <Text style={{ fontSize: 16 }}>{item.firstName} {item.lastName}</Text>
+                        <TouchableOpacity style={styles.modalRow} onPress={() => { handleAddExistingStudent(item); setShowStudentModal(false); }}>
+                            {item.imageUrl ? <Image source={{ uri: item.imageUrl }} style={styles.avatarSm} /> : <View style={[styles.avatarSm, { backgroundColor: COLORS.secondarySoft }]} />}
+                            <Text style={{ fontSize: 16, color: COLORS.textPrimary }}>{item.firstName} {item.lastName}</Text>
                         </TouchableOpacity>
                     )} />
-                    <Button title="Close" onPress={() => setShowStudentModal(false)} />
+                    <AppButton title="Close" variant="outline" onPress={() => setShowStudentModal(false)} />
                 </View>
             </Modal>
 
             <Modal visible={showStaffModal} animationType="slide" onRequestClose={() => setShowStaffModal(false)}>
-                <View style={{ flex: 1, padding: 16 }}>
-                    <Text style={{ fontSize: 18, marginBottom: 12 }}>Assign staff (select one or choose None)</Text>
+                <View style={styles.modalContainer}>
+                    <Text style={styles.modalTitle}>Assign staff (select one or choose None)</Text>
                     <FlatList data={[...staffList].sort((a, b) => (a.email || '').localeCompare(b.email || ''))} keyExtractor={i => i.id} renderItem={({ item }) => (
-                        <TouchableOpacity style={{ padding: 12, borderBottomWidth: 1, borderColor: '#eee' }} onPress={async () => { try { await assignRoster(selectedRoster.id, { staffId: item.id }); setSelectedRoster({ ...selectedRoster, assignedTo: item.id, assignedToEmail: item.email }); setShowStaffModal(false); } catch (e) { Alert.alert('Error', 'Assign failed'); } }}>
-                            <Text style={{ fontSize: 16 }}>{item.email}</Text>
+                        <TouchableOpacity style={styles.modalRow} onPress={async () => { try { await assignRoster(selectedRoster.id, { staffId: item.id }); setSelectedRoster({ ...selectedRoster, assignedTo: item.id, assignedToEmail: item.email }); setShowStaffModal(false); } catch (e) { Alert.alert('Error', 'Assign failed'); } }}>
+                            <Text style={{ fontSize: 16, color: COLORS.textPrimary }}>{item.email}</Text>
                         </TouchableOpacity>
                     )} ListFooterComponent={() => (
-                        <TouchableOpacity style={{ padding: 12, borderBottomWidth: 1, borderColor: '#eee' }} onPress={async () => { try { await assignRoster(selectedRoster.id, { clear: true }); setSelectedRoster({ ...selectedRoster, assignedTo: null, assignedToEmail: null }); setShowStaffModal(false); } catch (e) { Alert.alert('Error', 'Clear assign failed'); } }}>
-                            <Text style={{ fontSize: 16 }}>None (unassign)</Text>
+                        <TouchableOpacity style={styles.modalRow} onPress={async () => { try { await assignRoster(selectedRoster.id, { clear: true }); setSelectedRoster({ ...selectedRoster, assignedTo: null, assignedToEmail: null }); setShowStaffModal(false); } catch (e) { Alert.alert('Error', 'Clear assign failed'); } }}>
+                            <Text style={{ fontSize: 16, color: COLORS.textSecondary }}>None (unassign)</Text>
                         </TouchableOpacity>
                     )} />
-                    <Button title="Close" onPress={() => setShowStaffModal(false)} />
+                    <AppButton title="Close" variant="outline" onPress={() => setShowStaffModal(false)} />
                 </View>
             </Modal>
-            <View style={{alignItems: 'center', padding: 8 }}>
-                <Text style={{ fontSize: 20 }}>{selectedRoster ? selectedRoster.name : 'Loading roster...'}</Text>
-                {onClose ? <Button title="Close" onPress={onClose} /> : null}
+            <View style={styles.footer}>
+                <Text style={styles.footerTitle}>{selectedRoster ? selectedRoster.name : 'Loading roster...'}</Text>
+                {onClose ? <AppButton title="Close" variant="outline" size="small" onPress={onClose} /> : null}
             </View>
         </View>
     );
 }
 
 const styles = StyleSheet.create({
-    row: { 
-        flexDirection: 'row', 
-        alignItems: 'center', 
-        paddingVertical: 8, 
-        borderBottomWidth: 1, 
-        borderColor: '#eee' 
+    row: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingVertical: 10,
+        paddingHorizontal: 4,
+        borderBottomWidth: 1,
+        borderColor: COLORS.border,
     },
-     avatar: { 
-        width: 48, 
-        height: 48, 
-        borderRadius: 24, 
+    avatar: {
+        width: 44,
+        height: 44,
+        borderRadius: 22,
         marginRight: 12,
         justifyContent: 'center',
         alignItems: 'center',
     },
+    avatarSm: {
+        width: 40,
+        height: 40,
+        borderRadius: 20,
+        marginRight: 12,
+    },
+    staffName: {
+        fontWeight: '700',
+        color: COLORS.textPrimary,
+    },
+    staffLocation: {
+        fontSize: 12,
+        color: COLORS.textSecondary,
+    },
     container: {
         flex: 1,
-        justifyContent: 'center',
         padding: 16,
-    }
+        backgroundColor: COLORS.background,
+    },
+    actionsRow: {
+        flexDirection: 'row',
+        gap: 8,
+        marginBottom: 8,
+        flexWrap: 'wrap',
+    },
+    centerFill: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    modalContainer: {
+        flex: 1,
+        padding: 16,
+        backgroundColor: COLORS.background,
+    },
+    modalTitle: {
+        fontSize: 18,
+        fontWeight: '700',
+        marginBottom: 12,
+        color: COLORS.textPrimary,
+    },
+    modalRow: {
+        padding: 12,
+        borderBottomWidth: 1,
+        borderColor: COLORS.border,
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+    footer: {
+        alignItems: 'center',
+        padding: 10,
+        gap: 8,
+    },
+    footerTitle: {
+        fontSize: 18,
+        fontWeight: '700',
+        color: COLORS.textPrimary,
+    },
 });

@@ -1,9 +1,13 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, Button, FlatList, StyleSheet, Alert, Modal, TextInput, ActivityIndicator, Image, Platform } from 'react-native';
+import { View, Text, FlatList, StyleSheet, Alert, Modal, ActivityIndicator, Image, Platform } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { useAuth } from '../contexts/AuthContext';
 import { getStudentsServer, updateStudentServer, deleteStudentServer, getApiBaseUrl } from '../services/api';
 import { useNavigation } from '@react-navigation/native';
+import { COLORS, RADIUS, CARD_SHADOW } from '../constants/theme';
+import PageHeader from '../components/PageHeader';
+import TextField from '../components/TextField';
+import AppButton from '../components/AppButton';
 
 export default function EditStudentID() {
     const { user, loading: authLoading, isAdmin } = useAuth();
@@ -130,8 +134,7 @@ export default function EditStudentID() {
 
     return (
         <View style={styles.container}>
-            <Text style={styles.title}>Manage Student IDs</Text>
-            <Text style={styles.caption}>Edit or delete student information</Text>
+            <PageHeader eyebrow="ADMIN SETTINGS" title="Manage Student IDs" subtitle="Edit or delete student information" />
 
             {lastMessage ? <Text style={styles.message}>{lastMessage}</Text> : null}
 
@@ -148,55 +151,41 @@ export default function EditStudentID() {
                             {item.imageUrl ? (
                                 <Image source={{ uri: item.imageUrl }} style={styles.avatar} />
                             ) : (
-                                <View style={[styles.avatar, { backgroundColor: '#ddd', justifyContent: 'center', alignItems: 'center' }]}>
-                                    <Text style={{ color: '#666' }}>{(item.firstName || '?')[0]}</Text>
+                                <View style={[styles.avatar, styles.avatarFallback]}>
+                                    <Text style={{ color: COLORS.textSecondary }}>{(item.firstName || '?')[0]}</Text>
                                 </View>
                             )}
                             <View style={{ flex: 1, marginLeft: 12 }}>
                                 <Text style={styles.studentName}>{item.firstName} {item.lastName}</Text>
                             </View>
                             <View style={{ flexDirection: 'row', gap: 8 }}>
-                                <Button title="Edit" onPress={() => openEditModal(item)} />
-                                <Button title="Delete" color="#d00" onPress={() => handleDeleteStudent(item)} />
+                                <AppButton title="Edit" size="small" variant="secondary" onPress={() => openEditModal(item)} />
+                                <AppButton title="Delete" size="small" variant="danger" onPress={() => handleDeleteStudent(item)} />
                             </View>
                         </View>
                     )}
                 />
             )}
 
-            <View style={{ marginTop: 16 }}>
-                <Button title="Refresh" onPress={load} />
-                <View style={{ height: 8 }} />
-                <Button title="Back" onPress={handleCancel} />
+            <View style={{ marginTop: 16, gap: 10 }}>
+                <AppButton title="Refresh" variant="secondary" onPress={load} />
+                <AppButton title="Back" variant="outline" onPress={handleCancel} />
             </View>
 
             {/* Edit Modal */}
             <Modal visible={!!editTarget} animationType="slide" onRequestClose={() => setEditTarget(null)}>
                 <View style={styles.modalContainer}>
                     <Text style={styles.modalTitle}>Edit Student</Text>
-                    <Text style={styles.label}>First Name</Text>
-                    <TextInput
-                        style={styles.input}
-                        value={editFirstName}
-                        onChangeText={setEditFirstName}
-                        placeholder="First Name"
-                    />
-                    <Text style={styles.label}>Last Name</Text>
-                    <TextInput
-                        style={styles.input}
-                        value={editLastName}
-                        onChangeText={setEditLastName}
-                        placeholder="Last Name"
-                    />
+                    <TextField label="First Name" value={editFirstName} onChangeText={setEditFirstName} placeholder="First Name" />
+                    <TextField label="Last Name" value={editLastName} onChangeText={setEditLastName} placeholder="Last Name" />
+                    <AppButton title={editImageUri ? 'Change Photo' : 'Add Photo'} variant="secondary" onPress={pickImage} />
+                    {editImageUri ? <Text style={styles.helperText}>Photo selected</Text> : null}
                     <View style={{ height: 16 }} />
-                    <Button title={editImageUri ? 'Change Photo' : 'Add Photo'} onPress={pickImage} />
-                    {editImageUri ? <Text style={{ marginTop: 8 }}>Photo selected</Text> : null}
-                    <View style={{ height: 24 }} />
                     {saving ? <ActivityIndicator /> : (
                         <>
-                            <Button title="Save Changes" onPress={handleSaveEdit} />
-                            <View style={{ height: 8 }} />
-                            <Button title="Cancel" onPress={() => setEditTarget(null)} />
+                            <AppButton title="Save Changes" onPress={handleSaveEdit} />
+                            <View style={{ height: 10 }} />
+                            <AppButton title="Cancel" variant="outline" onPress={() => setEditTarget(null)} />
                         </>
                     )}
                 </View>
@@ -204,15 +193,14 @@ export default function EditStudentID() {
 
             {/* Delete Confirmation Modal */}
             <Modal visible={!!deleteTarget} transparent animationType="fade" onRequestClose={() => setDeleteTarget(null)}>
-                <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.4)' }}>
-                    <View style={{ width: 320, backgroundColor: '#fff', padding: 16, borderRadius: 8 }}>
-                        <Text style={{ fontSize: 16, fontWeight: 'bold', marginBottom: 12 }}>Confirm Delete</Text>
-                        <Text style={{ marginBottom: 16 }}>Are you sure you want to delete {deleteTarget?.firstName} {deleteTarget?.lastName}?</Text>
+                <View style={styles.confirmOverlay}>
+                    <View style={styles.confirmBox}>
+                        <Text style={styles.confirmTitle}>Confirm Delete</Text>
+                        <Text style={styles.confirmBody}>Are you sure you want to delete {deleteTarget?.firstName} {deleteTarget?.lastName}?</Text>
                         {deleting ? <ActivityIndicator /> : (
-                            <View style={{ flexDirection: 'row', justifyContent: 'flex-end' }}>
-                                <Button title="Cancel" onPress={() => setDeleteTarget(null)} />
-                                <View style={{ width: 8 }} />
-                                <Button title="Delete" color="#d00" onPress={confirmDelete} />
+                            <View style={{ flexDirection: 'row', justifyContent: 'flex-end', gap: 8 }}>
+                                <AppButton title="Cancel" size="small" variant="secondary" onPress={() => setDeleteTarget(null)} />
+                                <AppButton title="Delete" size="small" variant="danger" onPress={confirmDelete} />
                             </View>
                         )}
                     </View>
@@ -226,70 +214,83 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         padding: 16,
-        backgroundColor: '#fff',
-    },
-    title: {
-        fontSize: 24,
-        fontWeight: 'bold',
-        textAlign: 'center',
-        marginBottom: 8,
-    },
-    caption: {
-        fontSize: 14,
-        color: '#666',
-        textAlign: 'center',
-        marginBottom: 16,
+        backgroundColor: COLORS.background,
     },
     message: {
-        padding: 8,
-        backgroundColor: '#e8f5e9',
-        borderRadius: 4,
+        padding: 10,
+        backgroundColor: COLORS.primarySoft,
+        color: COLORS.primaryDark,
+        borderRadius: RADIUS.sm,
         marginBottom: 12,
         textAlign: 'center',
     },
     emptyText: {
         textAlign: 'center',
-        color: '#666',
+        color: COLORS.textSecondary,
         marginTop: 20,
     },
     studentRow: {
         flexDirection: 'row',
         alignItems: 'center',
-        padding: 12,
-        borderBottomWidth: 1,
-        borderColor: '#eee',
+        padding: 14,
+        marginBottom: 10,
+        backgroundColor: COLORS.surface,
+        borderRadius: RADIUS.md,
+        ...CARD_SHADOW,
     },
     avatar: {
         width: 40,
         height: 40,
         borderRadius: 20,
     },
+    avatarFallback: {
+        backgroundColor: COLORS.secondarySoft,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
     studentName: {
         fontSize: 16,
-        fontWeight: '500',
+        fontWeight: '600',
+        color: COLORS.textPrimary,
     },
     modalContainer: {
         flex: 1,
         padding: 24,
         justifyContent: 'center',
-        backgroundColor: '#fff',
+        backgroundColor: COLORS.background,
     },
     modalTitle: {
         fontSize: 22,
         fontWeight: 'bold',
         textAlign: 'center',
         marginBottom: 16,
+        color: COLORS.textPrimary,
     },
-    label: {
-        fontSize: 14,
-        fontWeight: '500',
-        marginBottom: 4,
-        marginTop: 12,
+    helperText: {
+        fontSize: 12,
+        color: COLORS.textSecondary,
+        marginTop: 8,
     },
-    input: {
-        height: 40,
-        borderColor: 'gray',
-        borderWidth: 1,
-        paddingHorizontal: 8,
+    confirmOverlay: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: 'rgba(0,0,0,0.4)',
+    },
+    confirmBox: {
+        width: 320,
+        backgroundColor: COLORS.surface,
+        padding: 18,
+        borderRadius: RADIUS.md,
+    },
+    confirmTitle: {
+        fontSize: 16,
+        fontWeight: 'bold',
+        marginBottom: 12,
+        color: COLORS.textPrimary,
+    },
+    confirmBody: {
+        marginBottom: 16,
+        color: COLORS.textPrimary,
     },
 });

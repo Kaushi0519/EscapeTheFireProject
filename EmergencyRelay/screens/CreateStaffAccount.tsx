@@ -1,8 +1,13 @@
-import {View, Text, TextInput, Button, StyleSheet, Alert, ActivityIndicator} from 'react-native';
+import {View, Text, StyleSheet, Alert, ActivityIndicator} from 'react-native';
 import {useNavigation} from '@react-navigation/native';
 import React, {useState} from 'react';
 import * as ImagePicker from 'expo-image-picker';
 import { createUserServer } from '../services/api';
+import { COLORS } from '../constants/theme';
+import PageHeader from '../components/PageHeader';
+import Card from '../components/Card';
+import TextField from '../components/TextField';
+import AppButton from '../components/AppButton';
 
 const CreateStaffAccount = () => {
 
@@ -73,53 +78,52 @@ const CreateStaffAccount = () => {
         (navigation as any).replace('DashboardAdmin');
     }
 
-        return (
-            <View style={styles.container}>
-                <Text style={styles.title}>Create Staff Account</Text>
-                <TextInput style={styles.input} placeholder="Email" onChangeText={setEmail} />
-                <TextInput style={styles.input} placeholder="Password" secureTextEntry onChangeText={setPassword} />
-                <View style={{height: 16}}/>
-                <Button title={imageUri ? 'Change Photo' : 'Pick Photo (optional)'} onPress={pickImage} />
-                {imageUri ? <Text style={{ marginVertical: 8 }}>Photo selected</Text> : null}
-                <View style={{height: 16}}/>
-                <Text style={styles.error}>{error}</Text>
-                <View style={{height: 16}}/>
-                {loading ? <ActivityIndicator /> : (
-                    <>
-                        <Button title="Create Staff Account" onPress={handleCreateAccount} />
-                        <View style={{height: 16}}/>
-                        <Button title="Create Admin Account" onPress={handleCreateAdminAccount} />
-                    </>
-                )}
-                <View style={{height: 16}}/>
-                <Button title="Cancel" onPress={handleCancel} />
+    return (
+        <View style={styles.container}>
+            <View style={styles.page}>
+                <PageHeader eyebrow="ADMIN SETTINGS" title="Create Staff Account" />
+                <Card>
+                    <TextField placeholder="Email" autoCapitalize="none" keyboardType="email-address" onChangeText={setEmail} />
+                    <TextField placeholder="Password" secureTextEntry onChangeText={setPassword} />
+                    <AppButton title={imageUri ? 'Change Photo' : 'Pick Photo (optional)'} variant="secondary" onPress={pickImage} />
+                    {imageUri ? <Text style={styles.helperText}>Photo selected</Text> : null}
+                    {error ? <Text style={styles.error}>{error}</Text> : null}
+                    <View style={{ height: 8 }} />
+                    {loading ? <ActivityIndicator /> : (
+                        <>
+                            <AppButton title="Create Staff Account" onPress={handleCreateAccount} />
+                            <View style={{ height: 10 }} />
+                            <AppButton title="Create Admin Account" variant="secondary" onPress={handleCreateAdminAccount} />
+                        </>
+                    )}
+                </Card>
+                <AppButton title="Cancel" variant="outline" onPress={handleCancel} />
             </View>
-        );
+        </View>
+    );
 }
 
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-        backgroundColor: '#ffffffff',
+        backgroundColor: COLORS.background,
+        padding: 16,
     },
-    title: {
-        fontSize: 24,
-        marginBottom: 16,
-        textAlign: 'center',
+    page: {
+        width: '100%',
+        maxWidth: 480,
+        alignSelf: 'center',
     },
-  input: {
-    height: 40,
-    borderColor: 'gray',
-    borderWidth: 1,
-    marginBottom: 12,
-    paddingHorizontal: 8,
-        },
+    helperText: {
+        fontSize: 12,
+        color: COLORS.textSecondary,
+        marginBottom: 8,
+    },
     error: {
-        color: 'red',
+        color: COLORS.danger,
         textAlign: 'center',
+        marginTop: 8,
     },
-    });
+});
 
 export default CreateStaffAccount;

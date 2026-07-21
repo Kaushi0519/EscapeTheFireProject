@@ -1,10 +1,15 @@
 import React from "react";
-import { View, Text, StyleSheet, TouchableOpacity, Button, TextInput, Alert, ActivityIndicator } from "react-native";
+import { View, Text, StyleSheet, Alert, ActivityIndicator } from "react-native";
 import { useAuth } from "../contexts/AuthContext";
 import * as ImagePicker from "expo-image-picker";
 import { useNavigation } from "@react-navigation/native";
 import Student from "../models/Student";
 import { createStudentServer } from "../services/api";
+import { COLORS } from "../constants/theme";
+import PageHeader from "../components/PageHeader";
+import Card from "../components/Card";
+import TextField from "../components/TextField";
+import AppButton from "../components/AppButton";
 
 export default function CreateStudentID() {
   const { user } = useAuth();
@@ -63,44 +68,38 @@ export default function CreateStudentID() {
     navigation.goBack();
   }
 
-        return (
-            <View style={styles.container}>
-                <Text style={styles.title}>Create Student ID</Text>
-                <TextInput style={styles.input} placeholder="First Name" onChangeText={setFirstName} />
-                <TextInput style={styles.input} placeholder="Last Name" onChangeText={setLastName} />
-                <View style={{height: 16}}/>
-                <Button title={imageUri ? 'Change Photo' : 'Pick Photo'} onPress={pickImage} />
-                {imageUri ? <Text style={{ marginVertical: 8 }}>Photo selected</Text> : null}
-                <View style={{height: 16}}/>
-                {saving ? <ActivityIndicator /> : <Button title="Create Student" onPress={handleCreateID} />}
-                <View style={{height: 16}}/>
-                <Button title="Cancel" onPress={handleCancel} />
-            </View>
-        );
+  return (
+    <View style={styles.container}>
+      <View style={styles.page}>
+        <PageHeader eyebrow="ADMIN SETTINGS" title="Create Student ID" />
+        <Card>
+          <TextField placeholder="First Name" onChangeText={setFirstName} />
+          <TextField placeholder="Last Name" onChangeText={setLastName} />
+          <AppButton title={imageUri ? 'Change Photo' : 'Pick Photo'} variant="secondary" onPress={pickImage} />
+          {imageUri ? <Text style={styles.helperText}>Photo selected</Text> : null}
+          <View style={{ height: 8 }} />
+          {saving ? <ActivityIndicator /> : <AppButton title="Create Student" onPress={handleCreateID} />}
+        </Card>
+        <AppButton title="Cancel" variant="outline" onPress={handleCancel} />
+      </View>
+    </View>
+  );
 };
 
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-        backgroundColor: '#ffffffff',
+        backgroundColor: COLORS.background,
+        padding: 16,
     },
-    title: {
-        fontSize: 24,
-        marginBottom: 16,
-        textAlign: 'center',
+    page: {
+        width: '100%',
+        maxWidth: 480,
+        alignSelf: 'center',
     },
-  input: {
-    height: 40,
-    borderColor: 'gray',
-    borderWidth: 1,
-    marginBottom: 12,
-    paddingHorizontal: 8,
-        },
-    error: {
-        color: 'red',
-        textAlign: 'center',
+    helperText: {
+        fontSize: 12,
+        color: COLORS.textSecondary,
+        marginBottom: 8,
     },
-    });
-
+});

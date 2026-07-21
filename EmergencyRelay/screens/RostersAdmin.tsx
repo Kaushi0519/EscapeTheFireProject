@@ -1,9 +1,14 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, Button, FlatList, StyleSheet, Image, Switch, TouchableOpacity, ActivityIndicator, Alert, TextInput, Modal, ScrollView } from 'react-native';
+import { View, Text, FlatList, Image, TouchableOpacity, ActivityIndicator, Alert, Modal, ScrollView } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { listRosters, createRoster, addStudentToRoster, getUsersServer, getStudentsServer, deleteRoster, getAllClearStatus } from '../services/api';
 import RosterDetail from './RosterDetail';
 import { useAuth } from '../contexts/AuthContext';
+import { COLORS, RADIUS } from '../constants/theme';
+import PageHeader from '../components/PageHeader';
+import Card from '../components/Card';
+import TextField from '../components/TextField';
+import AppButton from '../components/AppButton';
 
 export default function RostersAdmin() {
     const navigation = useNavigation();
@@ -127,16 +132,16 @@ export default function RostersAdmin() {
     if (loading) return <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}><ActivityIndicator /></View>;
 
     return (
-        <View style={{ flex: 1, padding: 16 }}>
-            <Text style={{ fontSize: 20, marginBottom: 12 }}>Rosters (Admin)</Text>
-            <Button title="Refresh" onPress={loadRosters} />
+        <View style={{ flex: 1, padding: 16, backgroundColor: COLORS.background }}>
+            <PageHeader eyebrow="ADMIN" title="Rosters" />
+            <AppButton title="Refresh" variant="secondary" onPress={loadRosters} />
 
             {/* All Clear Status Indicator */}
             {allClearStatus && (
                 <View style={{
-                    backgroundColor: allClearStatus.allClear ? '#4CAF50' : '#F44336',
+                    backgroundColor: allClearStatus.allClear ? COLORS.success : COLORS.danger,
                     padding: 12,
-                    borderRadius: 8,
+                    borderRadius: RADIUS.md,
                     marginVertical: 10,
                     alignItems: 'center'
                 }}>
@@ -149,143 +154,102 @@ export default function RostersAdmin() {
                 </View>
             )}
 
-            <View style={styles.rosterBox}>
-                <Text style={styles.RosterTitle}>Create new Class</Text>
-                <TextInput value={newRosterName} onChangeText={setNewRosterName} placeholder="Class name" style={{ borderWidth: 1, borderColor: '#ddd', padding: 8, marginBottom: 8 }} />
+            <Card title="Create new Class">
+                <TextField value={newRosterName} onChangeText={setNewRosterName} placeholder="Class name" />
                 <View style={{ flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', marginBottom: 8, gap: 8 }}>
-                    <Button title={creatingRosterStaff ? `Assign: ${creatingRosterStaff.email}` : 'Select staff'} onPress={() => openStaffModal('createRoster')} />
-                    <Button title={selectedStudentsForCreate.length > 0 ? `Students: ${selectedStudentsForCreate.length}` : 'Select students'} onPress={() => openStudentModal()} />
-                    <Button title={creating ? 'Creating...' : 'Create Roster'} onPress={handleCreateRoster} />
+                    <AppButton size="small" variant="secondary" title={creatingRosterStaff ? `Assign: ${creatingRosterStaff.email}` : 'Select staff'} onPress={() => openStaffModal('createRoster')} />
+                    <AppButton size="small" variant="secondary" title={selectedStudentsForCreate.length > 0 ? `Students: ${selectedStudentsForCreate.length}` : 'Select students'} onPress={() => openStudentModal()} />
+                    <AppButton size="small" title={creating ? 'Creating...' : 'Create Roster'} onPress={handleCreateRoster} />
                 </View>
-                {error ? <Text style={{ color: '#c00', marginBottom: 8 }}>{error}</Text> : null}
-            </View>
+                {error ? <Text style={{ color: COLORS.danger, marginBottom: 8 }}>{error}</Text> : null}
+            </Card>
 
-            <ScrollView style={styles.rosterBox} contentContainerStyle={{ paddingBottom: 80 }}>
-                <Text style={styles.RosterTitle}>All Rosters</Text>
-                {rosters.length === 0 ? <Text style={{ color: '#666' }}>No rosters</Text> : null}
-                {[...rosters].sort((a, b) => (a.name || '').localeCompare(b.name || '')).map(item => {
-                    const status = getRosterStatus(item.id);
-                    const studentsAllClear = status ? status.accountedStudents === status.totalStudents : false;
-                    const staffClear = status ? (!status.hasStaff || status.staffAccounted) : false;
-                    return (
-                        <View key={item.id} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderBottomWidth: 1, borderColor: '#eee' }}>
-                            <TouchableOpacity style={[styles.rosterRow, { flex: 1, padding: 8, backgroundColor: '#fff' }]} onPress={() => openRoster(item.id)}>
-                                <Text style={styles.RosterText}>Class: {item.name}</Text>
-                                <Text style={styles.RosterText}>Staff: {item.assignedToEmail ? `${item.assignedToEmail}` : ''}</Text>
-                                {status && (
-                                    <View style={{ flexDirection: 'row', marginTop: 4 }}>
-                                        <View style={{ flexDirection: 'row', alignItems: 'center', marginRight: 12 }}>
-                                            <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: staffClear ? '#4CAF50' : '#F44336', marginRight: 4 }} />
-                                            <Text style={{ fontSize: 12, color: '#666' }}>Staff</Text>
+            <Card title="All Rosters" style={{ flex: 1 }}>
+                <ScrollView contentContainerStyle={{ paddingBottom: 80 }}>
+                    {rosters.length === 0 ? <Text style={{ color: COLORS.textSecondary }}>No rosters</Text> : null}
+                    {[...rosters].sort((a, b) => (a.name || '').localeCompare(b.name || '')).map(item => {
+                        const status = getRosterStatus(item.id);
+                        const studentsAllClear = status ? status.accountedStudents === status.totalStudents : false;
+                        const staffClear = status ? (!status.hasStaff || status.staffAccounted) : false;
+                        return (
+                            <View key={item.id} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderBottomWidth: 1, borderColor: COLORS.border }}>
+                                <TouchableOpacity style={{ flex: 1, paddingVertical: 10 }} onPress={() => openRoster(item.id)}>
+                                    <Text style={{ fontSize: 16, fontWeight: '600', color: COLORS.textPrimary }}>Class: {item.name}</Text>
+                                    <Text style={{ fontSize: 13, color: COLORS.textSecondary, marginTop: 2 }}>Staff: {item.assignedToEmail ? `${item.assignedToEmail}` : ''}</Text>
+                                    {status && (
+                                        <View style={{ flexDirection: 'row', marginTop: 4 }}>
+                                            <View style={{ flexDirection: 'row', alignItems: 'center', marginRight: 12 }}>
+                                                <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: staffClear ? COLORS.success : COLORS.danger, marginRight: 4 }} />
+                                                <Text style={{ fontSize: 12, color: COLORS.textSecondary }}>Staff</Text>
+                                            </View>
+                                            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                                                <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: studentsAllClear ? COLORS.success : COLORS.danger, marginRight: 4 }} />
+                                                <Text style={{ fontSize: 12, color: COLORS.textSecondary }}>Students ({status.accountedStudents}/{status.totalStudents})</Text>
+                                            </View>
                                         </View>
-                                        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                                            <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: studentsAllClear ? '#4CAF50' : '#F44336', marginRight: 4 }} />
-                                            <Text style={{ fontSize: 12, color: '#666' }}>Students ({status.accountedStudents}/{status.totalStudents})</Text>
-                                        </View>
-                                    </View>
-                                )}
-                            </TouchableOpacity>
-                            <Button title="Delete" color="#c00" onPress={() => confirmDeleteRoster(item.id, item.name)} />
-                        </View>
-                    );
-                })}
-            </ScrollView>
+                                    )}
+                                </TouchableOpacity>
+                                <AppButton title="Delete" size="small" variant="danger" onPress={() => confirmDeleteRoster(item.id, item.name)} />
+                            </View>
+                        );
+                    })}
+                </ScrollView>
+            </Card>
 
             {selectedRosterId ? (
-                <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: '#fff' }}>
+                <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: COLORS.background }}>
                     <RosterDetail rosterId={selectedRosterId} onClose={() => { setSelectedRosterId(null); loadRosters(); setShowBackButton(true); }} />
                 </View>
             ) : null}
 
             {/* Modals: staff and student and confirm delete (reuse patterns) */}
             <Modal visible={showStaffModal} animationType="slide" onRequestClose={() => { setShowStaffModal(false); setShowBackButton(false); }}>
-                <View style={{ flex: 1, padding: 16 }}>
-                    <Text style={{ fontSize: 18, marginBottom: 12 }}>Select staff</Text>
+                <View style={{ flex: 1, padding: 16, backgroundColor: COLORS.background }}>
+                    <Text style={{ fontSize: 18, fontWeight: '700', marginBottom: 12, color: COLORS.textPrimary }}>Select staff</Text>
                     {staffLoading ? <ActivityIndicator /> : (
                         <FlatList data={[...staffList].sort((a, b) => (a.email || '').localeCompare(b.email || ''))} keyExtractor={i => i.id} renderItem={({ item }) => (
-                            <TouchableOpacity style={{ padding: 12, borderBottomWidth: 1, borderColor: '#eee' }} onPress={() => { if (staffSelectTarget === 'assignRoster') setSelectedStaffForAssign(item); if (staffSelectTarget === 'createRoster') setCreatingRosterStaff(item); setShowStaffModal(false); }}>
-                                <Text style={{ fontSize: 16 }}>{item.email}</Text>
+                            <TouchableOpacity style={{ padding: 12, borderBottomWidth: 1, borderColor: COLORS.border }} onPress={() => { if (staffSelectTarget === 'assignRoster') setSelectedStaffForAssign(item); if (staffSelectTarget === 'createRoster') setCreatingRosterStaff(item); setShowStaffModal(false); }}>
+                                <Text style={{ fontSize: 16, color: COLORS.textPrimary }}>{item.email}</Text>
                             </TouchableOpacity>
                         )} />
                     )}
-                    <Button title="Close" onPress={() => { setShowStaffModal(false); setShowBackButton(true); }} />
+                    <AppButton title="Close" variant="outline" onPress={() => { setShowStaffModal(false); setShowBackButton(true); }} />
                 </View>
             </Modal>
 
             <Modal visible={showStudentModal} animationType="slide" onRequestClose={() => { setShowStudentModal(false); setShowBackButton(false); }}>
-                <View style={{ flex: 1, padding: 16 }}>
-                    <Text style={{ fontSize: 18, marginBottom: 12 }}>Select student</Text>
+                <View style={{ flex: 1, padding: 16, backgroundColor: COLORS.background }}>
+                    <Text style={{ fontSize: 18, fontWeight: '700', marginBottom: 12, color: COLORS.textPrimary }}>Select student</Text>
                     {studentLoading ? <ActivityIndicator /> : (
                         <FlatList data={[...studentList].sort((a, b) => `${a.firstName} ${a.lastName}`.localeCompare(`${b.firstName} ${b.lastName}`))} keyExtractor={i => i.id} renderItem={({ item }) => (
-                            <TouchableOpacity style={{ padding: 12, borderBottomWidth: 1, borderColor: '#eee', flexDirection: 'row', alignItems: 'center' }} onPress={() => toggleSelectedStudentForCreate(item)}>
-                                {item.imageUrl ? <Image source={{ uri: item.imageUrl }} style={{ width: 40, height: 40, borderRadius: 20, marginRight: 12 }} /> : <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: '#eee', marginRight: 12 }} />}
-                                <Text style={{ fontSize: 16, flex: 1 }}>{item.firstName} {item.lastName}</Text>
-                                <Text style={{ color: selectedStudentsForCreate.find(s => s.id === item.id) ? '#06c' : '#999' }}>{selectedStudentsForCreate.find(s => s.id === item.id) ? 'Selected' : 'Tap to select'}</Text>
+                            <TouchableOpacity style={{ padding: 12, borderBottomWidth: 1, borderColor: COLORS.border, flexDirection: 'row', alignItems: 'center' }} onPress={() => toggleSelectedStudentForCreate(item)}>
+                                {item.imageUrl ? <Image source={{ uri: item.imageUrl }} style={{ width: 40, height: 40, borderRadius: 20, marginRight: 12 }} /> : <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: COLORS.secondarySoft, marginRight: 12 }} />}
+                                <Text style={{ fontSize: 16, flex: 1, color: COLORS.textPrimary }}>{item.firstName} {item.lastName}</Text>
+                                <Text style={{ color: selectedStudentsForCreate.find(s => s.id === item.id) ? COLORS.primary : COLORS.textSecondary }}>{selectedStudentsForCreate.find(s => s.id === item.id) ? 'Selected' : 'Tap to select'}</Text>
                             </TouchableOpacity>
                         )} />
                     )}
                     <View style={{ height: 12 }} />
-                    <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-                        <Button title="Done" onPress={() => { setShowStudentModal(false); setShowBackButton(true); }} />
-                        <Button title="Clear selection" onPress={() => setSelectedStudentsForCreate([])} />
+                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 8 }}>
+                        <AppButton title="Done" onPress={() => { setShowStudentModal(false); setShowBackButton(true); }} style={{ flex: 1 }} />
+                        <AppButton title="Clear selection" variant="secondary" onPress={() => setSelectedStudentsForCreate([])} style={{ flex: 1 }} />
                     </View>
                 </View>
             </Modal>
 
             <Modal visible={showConfirmDeleteModal} transparent animationType="fade" onRequestClose={() => setShowConfirmDeleteModal(false)}>
                 <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.4)' }}>
-                    <View style={{ width: '90%', backgroundColor: '#fff', padding: 16, borderRadius: 8 }}>
-                        <Text style={{ fontSize: 18, marginBottom: 12 }}>Delete roster</Text>
-                        <Text style={{ marginBottom: 12 }}>Are you sure you want to delete roster "{confirmDeleteTarget ? confirmDeleteTarget.name : ''}"? This cannot be undone.</Text>
-                        <View style={{ flexDirection: 'row', justifyContent: 'flex-end' }}>
-                            <Button title="Cancel" onPress={() => { setShowConfirmDeleteModal(false); setConfirmDeleteTarget(null); }} />
-                            <View style={{ width: 12 }} />
-                            <Button title="Delete" color="#c00" onPress={async () => { setShowConfirmDeleteModal(false); const id = confirmDeleteTarget && confirmDeleteTarget.id; setConfirmDeleteTarget(null); if (id) await handleDeleteRoster(id); }} />
+                    <View style={{ width: '90%', backgroundColor: COLORS.surface, padding: 18, borderRadius: RADIUS.md }}>
+                        <Text style={{ fontSize: 18, fontWeight: '700', marginBottom: 12, color: COLORS.textPrimary }}>Delete roster</Text>
+                        <Text style={{ marginBottom: 16, color: COLORS.textPrimary }}>Are you sure you want to delete roster "{confirmDeleteTarget ? confirmDeleteTarget.name : ''}"? This cannot be undone.</Text>
+                        <View style={{ flexDirection: 'row', justifyContent: 'flex-end', gap: 8 }}>
+                            <AppButton title="Cancel" size="small" variant="secondary" onPress={() => { setShowConfirmDeleteModal(false); setConfirmDeleteTarget(null); }} />
+                            <AppButton title="Delete" size="small" variant="danger" onPress={async () => { setShowConfirmDeleteModal(false); const id = confirmDeleteTarget && confirmDeleteTarget.id; setConfirmDeleteTarget(null); if (id) await handleDeleteRoster(id); }} />
                         </View>
                     </View>
                 </View>
             </Modal>
-            {showBackButton && <Button title="Back" onPress={() => navigation.goBack()} />}
+            {showBackButton && <AppButton title="Back" variant="outline" onPress={() => navigation.goBack()} />}
         </View>
     );
 }
-
-const styles = StyleSheet.create({
-    // fix formatting
-    row: { 
-        flexDirection: 'row', 
-        alignItems: 'center', 
-        paddingVertical: 8, 
-        borderBottomWidth: 1, 
-        borderColor: '#eee' 
-    },
-    avatar: { 
-        width: 48,
-        height: 48, 
-        borderRadius: 24, 
-        marginRight: 12 
-    },
-    rosterRow: { 
-        paddingVertical: 12, 
-        borderBottomWidth: 1, 
-        borderColor: '#eee' 
-    },
-        RosterTitle: {
-        fontSize: 20,
-        fontWeight: 'bold',
-        marginBottom: 12,
-    },
-    RosterText: {
-        marginTop: 4,
-        fontSize: 16,
-        marginBottom: 4,
-    },
-    rosterBox: {
-        marginVertical: 12, 
-        padding: 12, 
-        borderWidth: 1, 
-        borderColor: '#eee', 
-        borderRadius: 6, 
-        backgroundColor: '#fafafa'
-    }
-});
