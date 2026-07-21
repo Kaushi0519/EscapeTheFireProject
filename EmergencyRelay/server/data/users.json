@@ -1,0 +1,34 @@
+[
+  {
+    "id": "ml8keylxue8cxa",
+    "email": "staff@example.com",
+    "password_hash": "0be33d9be8a68d7671e4bac7a127af60:3d6a729fa6d91ece0636059c0e05ed2e09494609f65dee569778e7a0b5ba7b838b7426a6d110ab64bc115f9e840760b49cfc1dd373bddb107f450254db71064d",
+    "roles": [
+      "staff"
+    ],
+    "status": "active",
+    "created_at": "2026-02-04T21:54:19.010Z"
+  },
+  {
+    "id": "ml8kiuu1oraoge",
+    "email": "staff2@example.com",
+    "password_hash": "f248c25c3987d2a810742df060e7561e:47a340539b2489eb804881e14ed1c86386f3e9995d2484105fb28e3a4c9641a0a9d8e555cc82bbeb80d83646fcbd380da43d3cd408f11a60fedb6e0b1ec0a1dd",
+    "roles": [
+      "staff"
+    ],
+    "status": "active",
+    "created_at": "2026-02-04T21:57:20.745Z",
+    "session": "0d907075e84f314758fd23baa76ac9b5539f54848d8a0c75"
+  },
+  {
+    "id": "ml8l76i8a09yee",
+    "email": "newstaff@example.com",
+    "password_hash": "bfe81a596979b6083d2d76772d3958f3:dba1228297a9e8b3542f26edd2f4f6f524d91b00f7b52ee7c685f2af8af9673ff3bc61b978c9a9f7023724baa8bc8566239e827069b7adfdd6acb65a73b9c767",
+    "roles": [
+      "staff"
+    ],
+    "status": "active",
+    "created_at": "2026-02-04T22:16:15.606Z",
+    "session": "488886d32818d2aa7fadc2969d7759e44c03ab92bce050d1"
+  }
+]
