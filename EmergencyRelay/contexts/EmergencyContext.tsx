@@ -2,6 +2,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { getActiveEmergency, endEmergencyServer } from '../services/api';
 import { useAuth } from './AuthContext';
+import { calculateEscapeRoute, findRoomIdByName } from '../utils/escapeRoute';
 
 export interface EmergencyLocation {
   room: string;
@@ -132,19 +133,28 @@ export function EmergencyProvider({ children }: { children: React.ReactNode }) {
 
   // Update user's current location
   const updateUserLocation = useCallback((roomId: string, floor: number) => {
+    // Recalculate this user's personal escape route whenever their location changes
+    // during an active evacuation, routing around the room the emergency is in.
+    let escapePath: RouteNode[] = [];
+    if (emergencyState.isActive && emergencyState.requiresEvacuation && emergencyState.location) {
+      const dangerRoomId = findRoomIdByName(emergencyState.location.floor, emergencyState.location.room);
+      const steps = calculateEscapeRoute(floor, roomId, dangerRoomId || undefined);
+      escapePath = steps.map(step => ({
+        roomId: step.roomId,
+        floor: step.floor,
+        coordinates: { x: step.x, y: step.y },
+        instruction: step.instruction,
+      }));
+    }
+
     setUserEvacuation(prev => ({
       ...prev,
       currentRoom: roomId,
       currentFloor: floor,
+      escapePath,
+      isEvacuated: floor === 1 && escapePath.length <= 1,
     }));
-
-    // TODO: Recalculate escape path when location changes during emergency
-    // For now this is a placeholder - pathfinding will be implemented later
-    if (emergencyState.isActive) {
-      console.log('[EmergencyContext] User location updated during emergency:', roomId, 'floor', floor);
-      // Future: calculateEscapePath(roomId, floor, emergencyState.location)
-    }
-  }, [emergencyState.isActive]);
+  }, [emergencyState.isActive, emergencyState.requiresEvacuation, emergencyState.location]);
 
   // Poll for emergency state changes (only when logged in)
   useEffect(() => {

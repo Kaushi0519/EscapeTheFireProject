@@ -2,10 +2,11 @@ import {View, Text, StyleSheet, Alert, Dimensions, Platform, TouchableOpacity, S
 import {useNavigation} from '@react-navigation/native';
 import { useAuth } from '../contexts/AuthContext';
 import { useEmergency } from '../contexts/EmergencyContext';
-import React, {useState, useEffect} from 'react';
+import React, {useState, useEffect, useMemo} from 'react';
 import { getUserLocationsServer, getActiveAlertsServer, createAlertServer, confirmAlertServer, cancelAlertServer } from '../services/api';
 import { ReportBox } from '../models/Report';
 import FloorMap from '../components/FloorMap';
+import { calculateEscapeRoute, findRoomIdByName, summarizeRoute } from '../utils/escapeRoute';
 import { COLORS, RADIUS } from '../constants/theme';
 import Card from '../components/Card';
 import TextField from '../components/TextField';
@@ -200,6 +201,16 @@ export default function MapAdmin() {
 
     const [selectedStairwellGroup, setSelectedStairwellGroup] = useState<string | null>(null);
 
+    // Route from the emergency's location to the nearest exit, recomputed whenever the
+    // emergency location changes.
+    const escapePath = useMemo(() => {
+        if (!emergencyState.isActive || !emergencyState.requiresEvacuation || !emergencyState.location) return [];
+        const { room, floor } = emergencyState.location;
+        const roomId = findRoomIdByName(floor, room);
+        if (!roomId) return [];
+        return calculateEscapeRoute(floor, roomId);
+    }, [emergencyState.isActive, emergencyState.requiresEvacuation, emergencyState.location]);
+
     // Get room IDs that have active alerts for highlighting
     const highlightedRooms = alerts.map(a => {
         // Extract room number from location string (e.g., "Room 101" -> "101")
@@ -272,6 +283,15 @@ export default function MapAdmin() {
                         <Text style={styles.emergencyBannerSubtext}>
                             Started: {emergencyState.startedAt?.toLocaleTimeString()}
                         </Text>
+                        {emergencyState.requiresEvacuation && (
+                            <View style={styles.escapeRouteInfo}>
+                                <Text style={styles.escapeRouteText}>
+                                    {escapePath.length > 0
+                                        ? `Escape route: ${summarizeRoute(escapePath)}`
+                                        : 'Escape route unavailable for this location'}
+                                </Text>
+                            </View>
+                        )}
                         <TouchableOpacity
                             style={[styles.endEmergencyButton, endingEmergency && styles.endEmergencyButtonDisabled]}
                             onPress={handleEndEmergency}
@@ -295,6 +315,7 @@ export default function MapAdmin() {
                         gridCols={10}
                         emergencyMode={emergencyState.isActive}
                         emergencyLocation={emergencyState.location?.room || null}
+                        escapePath={escapePath}
                     />
                 </View>
 
@@ -495,6 +516,18 @@ const styles = StyleSheet.create({
         color: 'rgba(255,255,255,0.8)',
         fontSize: 12,
         marginTop: 4,
+    },
+    escapeRouteInfo: {
+        marginTop: 12,
+        backgroundColor: 'rgba(255,255,255,0.2)',
+        paddingVertical: 8,
+        paddingHorizontal: 16,
+        borderRadius: 8,
+    },
+    escapeRouteText: {
+        color: '#fff',
+        fontSize: 12,
+        textAlign: 'center',
     },
     endEmergencyButton: {
         marginTop: 12,

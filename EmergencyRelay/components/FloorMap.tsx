@@ -19,7 +19,7 @@ const floorImageDimensions: { [key: number]: { width: number; height: number } }
 
 // Room definitions for each floor
 // Coordinates are percentages of image dimensions (0-100)
-interface RoomArea {
+export interface RoomArea {
     id: string;
     name: string;
     type: 'room' | 'hall' | 'stairwell';
@@ -34,7 +34,7 @@ interface RoomArea {
 
 // Stairwell groups - selecting one highlights all in the same group across floors
 // Note: Each floor can have different stairwell positions, but same group letter = connected
-const STAIRWELL_GROUPS = {
+export const STAIRWELL_GROUPS = {
     'A': ['stair-A-1', 'stair-A-2', 'stair-A-3'], // Stairwell A (all floors)
     'B': ['stair-B-1', 'stair-B-2', 'stair-B-3'], // Stairwell B (all floors)
     'C': ['stair-C-1'], // Stairwell C (floor 1 only)
@@ -53,7 +53,7 @@ const STAIRWELL_GROUPS = {
 //    - y: distance from top edge (0 = top, 100 = bottom)
 //    - width/height: room size as percentage of image
 //
-const roomsByFloor: { [key: number]: RoomArea[] } = {
+export const roomsByFloor: { [key: number]: RoomArea[] } = {
     1: [
         // =====================================================
         // FLOOR 1 - firstFloorView.png (659x379 pixels)
@@ -207,7 +207,7 @@ interface FloorMapProps {
     gridCols?: number; // Number of grid columns
     emergencyMode?: boolean; // When true, disables room clicks and shows emergency styling
     emergencyLocation?: string | null; // Room name/id where emergency is located
-    escapePath?: { roomId: string; floor: number }[]; // Placeholder for escape route path
+    escapePath?: { roomId: string; floor: number; roomName?: string; instruction?: string }[]; // Ordered route to the nearest exit
 }
 
 export default function FloorMap({ 
@@ -394,6 +394,78 @@ export default function FloorMap({
     const currentRooms = roomsByFloor[currentFloor] || [];
     const hasFloorImage = floorImages[currentFloor] !== undefined;
 
+    // Converts a room-center percentage point into the same pixel space getRoomStyle uses.
+    const pointToPixels = (xPct: number, yPct: number) => {
+        if (imageLayout.width === 0 || imageLayout.height === 0) {
+            return { x: (xPct / 100) * containerSize.width, y: (yPct / 100) * containerSize.height };
+        }
+        return {
+            x: imageLayout.offsetX + (xPct / 100) * imageLayout.width,
+            y: imageLayout.offsetY + (yPct / 100) * imageLayout.height,
+        };
+    };
+
+    // Renders the computed escape route: connecting line segments + numbered stops for
+    // whichever steps fall on the floor currently being viewed, plus a badge on the last
+    // visible stop when the route continues onto another floor via a stairwell.
+    const renderEscapeRoute = () => {
+        if (!emergencyMode || escapePath.length === 0) return null;
+        const stepsOnFloor = escapePath
+            .map((step, index) => ({ ...step, index }))
+            .filter(step => step.floor === currentFloor && typeof (step as any).x === 'number');
+
+        if (stepsOnFloor.length === 0) return null;
+
+        const points = stepsOnFloor.map(step => ({ ...pointToPixels((step as any).x, (step as any).y), step }));
+        const segments = [];
+        for (let i = 0; i < points.length - 1; i++) {
+            const a = points[i];
+            const b = points[i + 1];
+            const dx = b.x - a.x;
+            const dy = b.y - a.y;
+            const length = Math.hypot(dx, dy);
+            const angle = (Math.atan2(dy, dx) * 180) / Math.PI;
+            segments.push(
+                <View
+                    key={`seg-${i}`}
+                    pointerEvents="none"
+                    style={{
+                        position: 'absolute',
+                        left: a.x,
+                        top: a.y - 2,
+                        width: length,
+                        height: 4,
+                        backgroundColor: '#2e7d32',
+                        borderRadius: 2,
+                        transform: [{ rotate: `${angle}deg` }],
+                        transformOrigin: 'left center',
+                    } as any}
+                />
+            );
+        }
+
+        const lastPoint = points[points.length - 1];
+        const nextStepIndex = lastPoint.step.index + 1;
+        const nextStep = escapePath[nextStepIndex];
+        const continuesToOtherFloor = nextStep && nextStep.floor !== currentFloor;
+
+        return (
+            <View pointerEvents="none" style={StyleSheet.absoluteFill}>
+                {segments}
+                {points.map((p, i) => (
+                    <View key={`stop-${i}`} style={[styles.escapeStop, { left: p.x - 10, top: p.y - 10 }]}>
+                        <Text style={styles.escapeStopText}>{p.step.index + 1}</Text>
+                    </View>
+                ))}
+                {continuesToOtherFloor && (
+                    <View style={[styles.escapeContinueBadge, { left: lastPoint.x - 40, top: lastPoint.y - 32 }]}>
+                        <Text style={styles.escapeContinueText}>→ Floor {nextStep.floor}</Text>
+                    </View>
+                )}
+            </View>
+        );
+    };
+
     // Calculate room position in pixels based on actual image layout
     const getRoomStyle = (room: RoomArea) => {
         if (imageLayout.width === 0 || imageLayout.height === 0) {
@@ -531,10 +603,15 @@ export default function FloorMap({
                         );
                     })}
 
-                    {/* Escape Path Placeholder - TODO: Implement actual path rendering */}
+                    {/* Escape route: connecting lines + numbered stops for this floor */}
+                    {renderEscapeRoute()}
+
                     {emergencyMode && escapePath.length > 0 && (
                         <View style={styles.escapePathOverlay} pointerEvents="none">
-                            <Text style={styles.escapePathText}>Escape route will be displayed here</Text>
+                            <Text style={styles.escapePathText}>
+                                {escapePath.find(s => s.floor === currentFloor)?.instruction
+                                    || `Escape route: ${escapePath[0]?.instruction || ''}`}
+                            </Text>
                         </View>
                     )}
                 </View>
@@ -724,6 +801,36 @@ const styles = StyleSheet.create({
     escapePathText: {
         color: '#fff',
         fontSize: 12,
+        fontWeight: 'bold',
+    },
+    escapeStop: {
+        position: 'absolute',
+        width: 20,
+        height: 20,
+        borderRadius: 10,
+        backgroundColor: '#2e7d32',
+        borderWidth: 2,
+        borderColor: '#fff',
+        justifyContent: 'center',
+        alignItems: 'center',
+        zIndex: 20,
+    },
+    escapeStopText: {
+        color: '#fff',
+        fontSize: 10,
+        fontWeight: 'bold',
+    },
+    escapeContinueBadge: {
+        position: 'absolute',
+        backgroundColor: '#2e7d32',
+        paddingHorizontal: 8,
+        paddingVertical: 4,
+        borderRadius: 10,
+        zIndex: 20,
+    },
+    escapeContinueText: {
+        color: '#fff',
+        fontSize: 11,
         fontWeight: 'bold',
     },
 });

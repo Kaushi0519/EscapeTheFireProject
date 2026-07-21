@@ -2,10 +2,11 @@ import {View, Text, StyleSheet, Alert, Dimensions} from 'react-native';
 import {useNavigation} from '@react-navigation/native';
 import { useAuth } from '../contexts/AuthContext';
 import { useEmergency } from '../contexts/EmergencyContext';
-import React, {useState, useEffect} from 'react';
+import React, {useState, useEffect, useMemo} from 'react';
 import { getUserLocationsServer, getActiveAlertsServer, createAlertServer, cancelAlertServer } from '../services/api';
 import { ReportBox } from '../models/Report';
 import FloorMap from '../components/FloorMap';
+import { calculateEscapeRoute, findRoomIdByName, summarizeRoute } from '../utils/escapeRoute';
 import { COLORS, RADIUS, CARD_SHADOW } from '../constants/theme';
 import Card from '../components/Card';
 import TextField from '../components/TextField';
@@ -119,6 +120,16 @@ export default function MapStaff() {
 
     const [selectedStairwellGroup, setSelectedStairwellGroup] = useState<string | null>(null);
 
+    // Route from the emergency's location to the nearest exit, recomputed whenever the
+    // emergency location changes. Routes around the danger room itself.
+    const escapePath = useMemo(() => {
+        if (!emergencyState.isActive || !emergencyState.requiresEvacuation || !emergencyState.location) return [];
+        const { room, floor } = emergencyState.location;
+        const roomId = findRoomIdByName(floor, room);
+        if (!roomId) return [];
+        return calculateEscapeRoute(floor, roomId);
+    }, [emergencyState.isActive, emergencyState.requiresEvacuation, emergencyState.location]);
+
     // Get room IDs that have active alerts for highlighting
     const highlightedRooms = alerts.map(a => {
         // Extract room number from location string (e.g., "Room 101" -> "101")
@@ -186,10 +197,11 @@ export default function MapStaff() {
                                 <Text style={styles.emergencyBannerSubtext}>
                                     Follow evacuation procedures. Map interactions disabled.
                                 </Text>
-                                {/* Placeholder for escape route info */}
                                 <View style={styles.escapeRouteInfo}>
                                     <Text style={styles.escapeRouteText}>
-                                        Escape route will be displayed once location is detected
+                                        {escapePath.length > 0
+                                            ? `Escape route: ${summarizeRoute(escapePath)}`
+                                            : 'Escape route unavailable for this location'}
                                     </Text>
                                 </View>
                             </>
@@ -209,6 +221,7 @@ export default function MapStaff() {
                         selectedStairwellGroup={selectedStairwellGroup}
                         emergencyMode={emergencyState.isActive}
                         emergencyLocation={emergencyState.location?.room || null}
+                        escapePath={escapePath}
                     />
                 </View>
 
