@@ -1,0 +1,6 @@
+{
+  "dependencies": {
+    "expo-location": "^55.1.4",
+    "react-native-wifi-reborn": "^4.13.6"
+  }
+}

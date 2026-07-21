@@ -1,0 +1,14 @@
+{
+  "name": "emergencyrelay-server",
+  "version": "0.1.0",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.6",
+    "express": "^4.22.1",
+    "nedb-promises": "^6.2.3",
+    "expo-server-sdk": "^3.13.1"
+  }
+}
