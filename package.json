@@ -1,0 +1,10 @@
+{
+  "dependencies": {
+    "expo-location": "^55.1.4",
+    "expo-notifications": "~55.0.13",
+    "react-native-wifi-reborn": "^4.13.6"
+  },
+  "devDependencies": {
+    "expo-module-scripts": "^55.0.2"
+  }
+}
